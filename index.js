@@ -96,7 +96,9 @@ function main(addresses) {
         const releasesString = JSON.stringify({
             releases: finalReleasesJson
         });
-        fs.writeFile('./data/releases.json', releasesString, 'utf8', function (err) {
+        const outputTimestamp = (new Date()).toISOString()
+
+        fs.writeFile(`./data/releases-${outputTimestamp}.json`, releasesString, 'utf8', function (err) {
             if (err) {
                 logger.error(err);
             }
@@ -111,14 +113,12 @@ function main(addresses) {
             Object.values(finalReleasesJson).forEach(repo => this.add(repo));
         });
 
-        fs.writeFile('./data/releasesIndex.json', JSON.stringify(releasesIndex.toJSON()), 'utf8', function (err) {
+        fs.writeFile(`./data/releasesIndex-${outputTimestamp}.json`, JSON.stringify(releasesIndex.toJSON()), 'utf8', function (err) {
             if (err) {
                 logger.error(err);
             }
         });
-    })
-    .done(() => {
-        console.timeend("Repo processing end")
+        console.timeEnd("Code.json processing")
     })
     .catch(function (err) {
         logger.error(err);
@@ -126,7 +126,7 @@ function main(addresses) {
 
 }
 
-console.time("Repo processing start")
+console.time("Code.json processing")
 main([
     'https://usaid.gov/code.json',
     'https://consumerfinance.gov/code.json',
