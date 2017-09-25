@@ -1,0 +1,72 @@
+
+{
+    "version": "1.0.1",
+    "agency": "GSA",
+    "organization": "GSA",
+    "projects": [
+      {
+        "name": "Government URLs",
+        "description": "An API for searching against all the government URLs - all of them. ",
+        "license": null,
+        "openSourceProject": 1,
+        "governmentWideReuseProject": 0,
+        "tags": [
+          "GSA",
+          "DigitalGovSearch",
+          "domains",
+          "websites"
+        ],
+        "contact": {
+          "email": "dawn.mccleskey@gsa.gov"
+        }
+      },
+      {
+        "name": "Search.digitalgov.gov",
+        "description": "The website for the DigitalGov Search program",
+        "license": null,
+        "openSourceProject": 1,
+        "governmentWideReuseProject": 0,
+        "tags": [
+          "GSA",
+          "DigitalGovSearch",
+          "search",
+          "website"
+        ],
+        "contact": {
+          "email": "dawn.mccleskey@gsa.gov"
+        }
+      },
+      {
+        "name": "open.gsa.gov",
+        "description": "A developer hub to share GSA data, APIs, and code.",
+        "license": "https://github.com/GSA/open.gsa.gov/blob/gh-pages/TERMS.md",
+        "openSourceProject": 1,
+        "governmentWideReuseProject": 1,
+        "tags": [
+          "data",
+          "api",
+          "developer"
+        ],
+        "contact": {
+          "email": "cto@gsa.gov"
+        }
+      },
+      {
+        "name": "DigitalGov Search Content Assets",
+        "description": "DigitalGov Search customer content assets for special projects",
+        "license": null,
+        "openSourceProject": 1,
+        "governmentWideReuseProject": 0,
+        "tags": [
+          "GSA",
+          "DigitalGovSearch",
+          "search",
+          "customer-support"
+        ],
+        "contact": {
+          "email": "dawn.mccleskey@gsa.gov"
+        }
+      }
+    ]
+  }
+  

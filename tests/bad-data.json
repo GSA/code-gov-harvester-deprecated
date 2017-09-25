@@ -1,0 +1,5 @@
+{
+    "version": "1.0.1",
+    "what": "this is bad json",
+    "why": "it does not follow the schema"
+}
