@@ -140,7 +140,18 @@ function upgradeProject(project) {
     return project;
 }
 
+function mergeJson(mergeTo, mergeFrom) {
+    const keys = Object.keys(mergeFrom)
+
+    keys.forEach((key) => {
+        mergeTo[key] = mergeFrom[key]
+    })
+
+    return mergeTo
+}
+
 module.exports = {
     validateJson,
-    upgradeProject
+    upgradeProject,
+    mergeJson
 }
