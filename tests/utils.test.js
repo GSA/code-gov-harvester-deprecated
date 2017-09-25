@@ -4,7 +4,8 @@ const chai = require('chai'),
       expect = chai.expect
 
 const validateJson = require('../libs/utils').validateJson,
-    upgradeProject = require('../libs/utils').upgradeProject
+    upgradeProject = require('../libs/utils').upgradeProject,
+    mergeJson = require('../libs/utils').mergeJson
 
 describe('Json Validation', function() {
     it('wrong data for schema v1.0.1', function(){
@@ -27,8 +28,35 @@ describe('Upgrade Code.json to 2.0.0', function() {
         const expectedReleasesLength = codeJson.projects.length
 
         codeJson.releases = codeJson.projects.map(upgradeProject)
-        
-        codeJson.releases.length.should.equal(expectedReleasesLength)
+
         codeJson.releases[0].should.have.property('relatedCode')
+    })
+})
+
+describe('Merge releases', function() {
+    it('merge two releases json objects', function() {
+        const expectedJson = {
+            "releases": {
+                "name": "Joe",
+                "lastName": "Smith",
+                "age": 36
+            }
+        }
+        const mergeToJson = {
+            "releases": {
+                "name": "Joe",
+                "lastName": "Smith",
+            }
+        }
+        const mergeFromJson = 
+        {
+            "releases": {
+                "age": 36
+            }
+        }
+
+        releasesResult = mergeJson(mergeToJson.releases, mergeFromJson.releases)
+
+        expect(releasesResult).to.deep.equal(expectedJson.releases)
     })
 })
