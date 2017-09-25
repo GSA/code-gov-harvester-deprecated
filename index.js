@@ -4,6 +4,7 @@ const fs = require('fs');
 const lunr = require('lunr');
 const validateJson = require('./libs/utils').validateJson
 const upgradeProject = require('./libs/utils').upgradeProject
+const mergeJson = require('./libs/utils').mergeJson
 
 const winston = require('winston')
 const logger = new (winston.Logger)({
@@ -75,7 +76,7 @@ function main(addresses) {
     )
     .then(function (allCodeJsons) {
         // console.log(allCodeJsons);
-        const finalReleasesJson = allCodeJsons.map(function (codeJson) {
+        let finalReleasesJson = allCodeJsons.map(function (codeJson) {
             return codeJson.releases.map(function (release) {
                 const id = encodeURIComponent(codeJson.agency) + '/' + encodeURIComponent(release.name);
 
@@ -92,6 +93,9 @@ function main(addresses) {
                 return r;
             }, releasesJson);
         }, {});
+
+        const defaultReleases = require('./data/defaultReleases.json')
+        finalReleasesJson = mergeJson(finalReleasesJson, defaultReleases.releases)
 
         const releasesString = JSON.stringify({
             releases: finalReleasesJson
