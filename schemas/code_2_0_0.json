@@ -276,7 +276,6 @@
             "name",
             "permissions",
             "repositoryURL",
-            "description",
             "laborHours",
             "tags",
             "contact"
@@ -286,7 +285,6 @@
       }
     },
     "required": [
-      "version",
       "measurementType",
       "agency",
       "releases"

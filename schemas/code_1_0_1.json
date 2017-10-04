@@ -184,19 +184,16 @@
                 },
                 "required": [
                     "name",
-                    "description",
                     "license",
                     "openSourceProject",
                     "governmentWideReuseProject",
                     "tags",
-                    "contact",
-                    "repository"
+                    "contact"
                 ]
             }
         }
     },
     "required": [
-        "version",
         "agency",
         "projects"
     ]
