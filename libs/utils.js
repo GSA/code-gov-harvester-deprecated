@@ -5,16 +5,21 @@ const Ajv = require('ajv')
 /**
  * Returns a Code.json schema validator for the supplied version
  * @function getSchemaValidator
- * @param {string} version - The Code.json schema version
+ * @param {object} json - The Code.json JSON object
  */
-_getSchema = (version) => {
+_getSchema = (json) => {
 
-    if (version === '1.0.1') {
+    if (json.version === '1.0.1') {
         return schema = require('../schemas/code_1_0_1.json')
-    } else if (version === '2.0.0') {
+    } else if (json.version === '2.0.0') {
         return schema = require('../schemas/code_2_0_0.json')
     } else {
-        throw new Error(`Wrong Code.json version: ${version}`)
+        if (json.releases) {
+            return schema = require('../schemas/code_2_0_0.json')
+        }
+
+        return schema = require('../schemas/code_1_0_1.json')
+        
     }
 
 }
@@ -22,7 +27,7 @@ _getSchema = (version) => {
 validateJson = (data) => {
     const ajv = Ajv({validateSchema: false})
     ajv.addMetaSchema(require('ajv/lib/refs/json-schema-draft-04.json'));
-    const schema = _getSchema(data.version)
+    const schema = _getSchema(data)
 
     const validator = ajv.compile(schema)
     validator(data)
