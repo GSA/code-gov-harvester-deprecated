@@ -14,7 +14,7 @@ _getSchema = (version) => {
     } else if (version === '2.0.0') {
         return schema = require('../schemas/code_2_0_0.json')
     } else {
-        throw new Error(`Wrong Code.json version: ${version}`)
+        return schema = require('../schemas/code_1_0_1.json')
     }
 
 }

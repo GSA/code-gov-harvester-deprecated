@@ -28,16 +28,15 @@ function getCodeJson(requestOptions) {
         const results = validateJson(json)
 
         if (results.errors) {
-            throw new Error(`Repo: ${requestOptions.uri} has not passed schema validation`)
+            // throw new Error(`Repo: ${requestOptions.uri} has not passed schema validation`)
         }
 
-        if (json.version === '1.0.1') {
-            json.releases = json.projects.map(upgradeProject)
-            return json
-        } else if(json.version === '2.0.0') {
+         if(json.version === '2.0.0') {
             return json
         } else {
-            throw new Error(`JSON version found at URL: ${requestOptions.uri} is of the wrong version.`);
+            json.releases = json.projects.map(upgradeProject)
+            delete json.projects;
+            return json
         }
     })
     .catch(errors.StatusCodeError, function(reason) {
