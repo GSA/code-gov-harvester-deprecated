@@ -69,7 +69,6 @@
                     "properties": {
                       "URL": {
                         "type": "string",
-                        "format": "uri",
                         "description": "The URL of the release license, if available. If not, null should be used."
                       },
                       "name": {
@@ -103,10 +102,10 @@
                   "description": "If an exemption is listed in the 'usageType' field, this field should include a one- or two- sentence justification for the exemption used."
                 }
               },
-              "required":"licenses"
+              "required": ["licenses"]
             },
             "tags": {
-              "type": "array",
+              "type": ["array", "null"],
               "items": {
                 "type": "string",
                 "description": "An array of keywords that will be helpful in discovering and searching for the release."
@@ -128,7 +127,6 @@
                 },
                 "URL": {
                   "type": "string",
-                  "format": "uri",
                   "description": "The URL to a website that can be used to reach the point of contact. For example, 'http://twitter.com/codeDotGov'."
                 },
                 "phone": {
@@ -136,7 +134,7 @@
                   "description": "A phone number for the point of contact for the release."
                 }
               },
-              "required": "email",
+              "required": ["email"],
               "additionalProperties": false
             },
             "status": {
@@ -158,22 +156,18 @@
             },
             "repositoryURL": {
               "type": ["string", "null"],
-              "format": "uri",
               "description": "The URL of the public release repository for open source repositories. This field is not required for repositories that are only available as government-wide reuse or are closed (pursuant to one of the exemptions)."
             },
             "homepageURL": {
               "type": "string",
-              "format": "uri",
               "description": "The URL of the public release homepage."
             },
             "downloadURL": {
               "type": "string",
-              "format": "uri",
               "description": "The URL where a distribution of the release can be found."
             },
             "disclaimerURL": {
               "type": "string",
-              "format": "uri",
               "description": "The URL where disclaimer language regarding the release can be found."
             },
             "disclaimerText": {
@@ -203,7 +197,6 @@
                   },
                   "URL": {
                     "type": "string",
-                    "format": "uri",
                     "description": "The URL where the code repository, project, library or release can be found."
                   }
                   
@@ -223,7 +216,6 @@
                   },
                   "URL": {
                     "type": "string",
-                    "format": "uri",
                     "description": "The URL where the software can be found."
                   }
                   
