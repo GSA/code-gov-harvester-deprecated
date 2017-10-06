@@ -62,3 +62,6 @@ releases-*.json
 releasesIndex-*.json
 *.zip
 .DS_Store
+
+harvester.log.json
+harvester-errors.log.json
