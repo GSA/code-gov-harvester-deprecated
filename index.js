@@ -1,3 +1,4 @@
+require('core-js/es7/object');
 const request = require('request-promise');
 const errors = require('request-promise/errors')
 const fs = require('fs');
@@ -10,34 +11,49 @@ const winston = require('winston')
 const logger = new (winston.Logger)({
     level: 'info',
     transports: [
-        new (winston.transports.Console)(),
+        new (winston.transports.Console)({
+            colorize: true,
+            prettyPrint: true
+        }),
         new (winston.transports.File)({
-            filename: 'harvester.log'
+            name: 'general-logger',
+            filename: 'harvester.log.json'
+        }),
+        new (winston.transports.File)({
+            name: 'error-logger',
+            filename: 'harvester-errors.log.json',
+            level: 'error'
         })
     ]
 })
 
-require('core-js/es7/object');
-
 function getCodeJson(requestOptions) {
     return request.get(requestOptions)
     .then(function (json) {
-        // const json = JSON.parse(body);
-
         logger.info(`Validating JSON from ${requestOptions.uri}`)
-        const results = validateJson(json)
+        const returnedJsonType = (typeof json)
 
-        if (results.errors) {
-            throw new Error(`Repo: ${requestOptions.uri} has not passed schema validation`)
-        }
+        if ( returnedJsonType === 'object') {
+            const results = validateJson(json)
 
-        if (json.version === '1.0.1') {
-            json.releases = json.projects.map(upgradeProject)
-            return json
-        } else if(json.version === '2.0.0') {
-            return json
+            if (results.errors) {
+                validationErrorMsg = `Repo: ${requestOptions.uri} has not passed schema validation. Errors: `
+                results.errors.forEach(function(error) {
+                    validationErrorMsg += `Error type: ${error.keyword} ${error.dataPath} ${error.message} | `
+                })
+                throw new Error(validationErrorMsg)
+            }
+
+            if (json.version === '1.0.1' || json.hasOwnProperty('projects')) {
+                json.releases = json.projects.map(upgradeProject)
+                return json
+            } else if(json.version === '2.0.0' || json.hasOwnProperty('releases')) {
+                return json
+            } else {
+                throw new Error(`JSON found at URL: ${requestOptions.uri} is of the wrong version or does not have the properties to determine it.`);
+            }
         } else {
-            throw new Error(`JSON version found at URL: ${requestOptions.uri} is of the wrong version.`);
+            throw new Error(`JSON found at URL: ${requestOptions.uri} is of unexpected type: ${returnedJsonType}.`)
         }
     })
     .catch(errors.StatusCodeError, function(reason) {
@@ -75,7 +91,6 @@ function main(addresses) {
         })
     )
     .then(function (allCodeJsons) {
-        // console.log(allCodeJsons);
         let finalReleasesJson = allCodeJsons.map(function (codeJson) {
             return codeJson.releases.map(function (release) {
                 const id = encodeURIComponent(codeJson.agency) + '/' + encodeURIComponent(release.name);
@@ -149,7 +164,7 @@ main([
     'https://gsa.gov/code.json',
     'https://hhs.gov/code.json',
     'https://www.hud.gov/code.json',
-    'https://archives.gov/code.json',
+    'https://www.archives.gov/code.json',
     'https://code.nasa.gov/code.json',
     'https://www.nrc.gov/code.json',
     'https://nsf.gov/code.json',
