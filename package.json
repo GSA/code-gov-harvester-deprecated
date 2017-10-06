@@ -4,6 +4,8 @@
   "description": "Extracted Code.gov API harvester for independent use.",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "debug": "node --inspect index.js",
     "test": "./node_modules/.bin/_mocha tests"
   },
   "author": "Code.gov Team",
