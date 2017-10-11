@@ -71,7 +71,7 @@
                         ]
                     },
                     "tags": {
-                        "type": "array",
+                        "type": ["array", "null"],
                         "items": {
                             "type": "string"
                         }
@@ -184,19 +184,16 @@
                 },
                 "required": [
                     "name",
-                    "description",
                     "license",
                     "openSourceProject",
                     "governmentWideReuseProject",
                     "tags",
-                    "contact",
-                    "repository"
+                    "contact"
                 ]
             }
         }
     },
     "required": [
-        "version",
         "agency",
         "projects"
     ]
