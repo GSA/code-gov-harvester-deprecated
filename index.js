@@ -3,9 +3,9 @@ const request = require('request-promise');
 const errors = require('request-promise/errors')
 const fs = require('fs');
 const lunr = require('lunr');
-const validateJson = require('./libs/utils').validateJson
-const upgradeProject = require('./libs/utils').upgradeProject
-const mergeJson = require('./libs/utils').mergeJson
+const {validateJson} = require('./libs/utils')
+const {upgradeProject} = require('./libs/utils')
+const {mergeJson} = require('./libs/utils')
 
 const winston = require('winston')
 const logger = new (winston.Logger)({
@@ -31,29 +31,30 @@ function getCodeJson(requestOptions) {
     return request.get(requestOptions)
     .then(function (json) {
         logger.info(`Validating JSON from ${requestOptions.uri}`)
-        const returnedJsonType = (typeof json)
+        let formattedData;
+        try{
+            formattedData = JSON.parse(json.replace(/^\uFEFF/, ''))
+        } catch(err) {
+            throw new Error(`Error formatting code.json for ${requestOptions.uri} - `, err)
+        }
+        
+        const results = validateJson(formattedData)
 
-        if ( returnedJsonType === 'object') {
-            const results = validateJson(json)
+        if (results.errors) {
+            validationErrorMsg = `Repo: ${requestOptions.uri} has not passed schema validation. Errors: `
+            results.errors.forEach(function(error) {
+                validationErrorMsg += `Error type: ${error.keyword} ${error.dataPath} ${error.message} | `
+            })
+            throw new Error(validationErrorMsg)
+        }
 
-            if (results.errors) {
-                validationErrorMsg = `Repo: ${requestOptions.uri} has not passed schema validation. Errors: `
-                results.errors.forEach(function(error) {
-                    validationErrorMsg += `Error type: ${error.keyword} ${error.dataPath} ${error.message} | `
-                })
-                throw new Error(validationErrorMsg)
-            }
-
-            if (json.version === '1.0.1' || json.hasOwnProperty('projects')) {
-                json.releases = json.projects.map(upgradeProject)
-                return json
-            } else if(json.version === '2.0.0' || json.hasOwnProperty('releases')) {
-                return json
-            } else {
-                throw new Error(`JSON found at URL: ${requestOptions.uri} is of the wrong version or does not have the properties to determine it.`);
-            }
+        if (formattedData.version === '1.0.1' || formattedData.hasOwnProperty('projects')) {
+            formattedData.releases = formattedData.projects.map(upgradeProject)
+            return formattedData
+        } else if(formattedData.version === '2.0.0' || formattedData.hasOwnProperty('releases')) {
+            return formattedData
         } else {
-            throw new Error(`JSON found at URL: ${requestOptions.uri} is of unexpected type: ${returnedJsonType}.`)
+            throw new Error(`JSON found at URL: ${requestOptions.uri} is of the wrong version or does not have the properties to determine it.`);
         }
     })
     .catch(errors.StatusCodeError, function(reason) {
@@ -81,11 +82,11 @@ function main(addresses) {
         addresses.map((address) => {
             const requestOptions = {
                 uri: address,
+                rejectUnauthorized: false,
                 headers: {
                     'Accept': 'application/json',
                     'User-Agent': 'Code-Gov'
-                },
-                json: true
+                }
             }
             return getCodeJson(requestOptions);
         })
