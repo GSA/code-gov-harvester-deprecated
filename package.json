@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node index.js",
     "debug": "node --inspect index.js",
-    "test": "./node_modules/.bin/_mocha tests"
+    "test": "./node_modules/.bin/nyc mocha tests",
+    "lint": "./node_modules/.bin/eslint ."
   },
   "author": "Code.gov Team",
   "license": "ISC",
@@ -20,7 +21,10 @@
   },
   "devDependencies": {
     "chai": "^4.1.2",
-    "eslint": "^4.7.1",
-    "mocha": "^3.5.3"
+    "eslint": "^4.9.0",
+    "eslint-plugin-mocha": "^4.11.0",
+    "mocha": "^3.5.3",
+    "mocha-junit-reporter": "^1.15.0",
+    "nyc": "^11.2.1"
   }
 }
