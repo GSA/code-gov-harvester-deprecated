@@ -90,7 +90,7 @@ function main(addresses) {
         rejectUnauthorized: false,
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'Code-Gov'
+          'User-Agent': 'code.gov'
         }
       }
       return getCodeJson(requestOptions)
