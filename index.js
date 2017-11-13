@@ -7,6 +7,8 @@ const { validateJson } = require('./libs/utils')
 const { upgradeProject } = require('./libs/utils')
 const { mergeJson } = require('./libs/utils')
 
+const agencyRepoCount = {}
+
 const winston = require('winston')
 const logger = new(winston.Logger)({
   level: 'info',
@@ -90,7 +92,7 @@ function main(addresses) {
         rejectUnauthorized: false,
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'Code-Gov'
+          'User-Agent': 'code.gov'
         }
       }
       return getCodeJson(requestOptions)
@@ -98,6 +100,13 @@ function main(addresses) {
     .then(function (allCodeJsons) {
       let finalReleasesJson = allCodeJsons.map(function (codeJson) {
         return codeJson.releases.map(function (release) {
+          
+          if(agencyRepoCount.hasOwnProperty(codeJson.agency)) {
+            agencyRepoCount[codeJson.agency] += 1
+          } else {
+            agencyRepoCount[codeJson.agency] = 1
+          }
+          
           const id = encodeURIComponent(codeJson.agency) + '/' + encodeURIComponent(release.name)
 
           release.id = id
@@ -141,12 +150,18 @@ function main(addresses) {
           logger.error(err)
         }
       })
+      fs.writeFile('./data/processed_agency_repo_count.json', JSON.stringify(agencyRepoCount), 'utf8', function (err) {
+        if (err) {
+          logger.error(err)
+        }
+      })
+
       logger.info('[FINISHED]: Code.json processing')
     })
     .catch(function (err) {
       logger.error(err)
     })
-
+    
 }
 
 logger.info('[STARTED]: Code.json processing')
