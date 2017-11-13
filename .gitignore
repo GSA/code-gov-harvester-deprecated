@@ -58,8 +58,8 @@ typings/
 .env
 
 .vscode
-releases-*.json
-releasesIndex-*.json
+releases*.json
+processed_agency_repo_count*.json
 *.zip
 .DS_Store
 
