@@ -144,7 +144,9 @@ function mergeJson(mergeTo, mergeFrom) {
   const keys = Object.keys(mergeFrom)
 
   keys.forEach((key) => {
-    mergeTo[key] = mergeFrom[key]
+    if(!mergeTo.hasOwnProperty(key)) {
+      mergeTo[key] = mergeFrom[key]
+    }
   })
 
   return mergeTo
