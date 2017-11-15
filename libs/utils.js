@@ -8,10 +8,11 @@ const Ajv = require('ajv')
  * @param {object} json - The Code.json JSON object
  */
 function _getSchema (json) {
+
   if (json.version === '1.0.1' || json.hasOwnProperty('projects')) {
-    return schema = require('../schemas/code_1_0_1.json')
+    return require('../schemas/code_1_0_1.json')
   } else if (json.version === '2.0.0' || json.hasOwnProperty('releases')) {
-    return schema = require('../schemas/code_2_0_0.json')
+    return require('../schemas/code_2_0_0.json')
   } else {
     throw new Error(`Version for ${json.agency} not obtainable. JSON has wrong version number or does not have necessary properties to determine it.`)
   }
