@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Extracted Code.gov API harvester for independent use.",
   "main": "index.js",
+  "repository": {
+    "url": "https://github.com/GSA/code-gov-harvester"
+  },
   "scripts": {
     "start": "node index.js",
     "debug": "node --inspect index.js",
@@ -13,7 +16,9 @@
   "license": "ISC",
   "dependencies": {
     "ajv": "^5.2.2",
+    "commander": "^2.11.0",
     "core-js": "^2.5.1",
+    "jsonfile": "^4.0.0",
     "lunr": "^2.1.3",
     "request": "^2.82.0",
     "request-promise": "^4.2.1",
