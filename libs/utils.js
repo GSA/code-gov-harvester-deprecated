@@ -1,6 +1,9 @@
 /** @module libs/utils */
 
 const Ajv = require('ajv')
+const config = require('../config')
+const winston = require('winston')
+const JsonFile = require('jsonfile')
 
 /**
  * Returns a Code.json schema validator for the supplied version
@@ -10,9 +13,9 @@ const Ajv = require('ajv')
 function _getSchema (json) {
 
   if (json.version === '1.0.1' || json.hasOwnProperty('projects')) {
-    return require('../schemas/code_1_0_1.json')
+    return require(`${config.schema101Path}`)
   } else if (json.version === '2.0.0' || json.hasOwnProperty('releases')) {
-    return require('../schemas/code_2_0_0.json')
+    return require(`${config.schema200Path}`)
   } else {
     throw new Error(`Version for ${json.agency} not obtainable. JSON has wrong version number or does not have necessary properties to determine it.`)
   }
@@ -153,8 +156,47 @@ function mergeJson(mergeTo, mergeFrom) {
   return mergeTo
 }
 
+function getVersion() {
+  const packageJson = require('../package.json')
+
+  return packageJson.version
+}
+
+const logger = new(winston.Logger)({
+  level: config.loggerLevel,
+  transports: [
+    new(winston.transports.Console)({
+      colorize: true,
+      prettyPrint: true,
+      timestamp: true
+    }),
+    new(winston.transports.File)({
+      name: 'general-logger',
+      filename: config.loggerFilename,
+      timestamp: true
+    }),
+    new(winston.transports.File)({
+      name: 'error-logger',
+      filename: config.loggerErrorFilename,
+      level: 'error',
+      timestamp: true
+    })
+  ]
+})
+
+function writeReleasesJson(filePath, releases) {
+  JsonFile.writeFile(filePath, releases, (err) => {
+    if (err) {
+      logger.error(err)
+    }
+  })
+}
+
 module.exports = {
   validateJson,
   upgradeProject,
-  mergeJson
+  mergeJson,
+  getVersion,
+  logger,
+  writeReleasesJson
 }
