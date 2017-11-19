@@ -3,34 +3,14 @@ const request = require('request-promise')
 const errors = require('request-promise/errors')
 const fs = require('fs')
 const lunr = require('lunr')
-const { validateJson } = require('./libs/utils')
-const { upgradeProject } = require('./libs/utils')
-const { mergeJson } = require('./libs/utils')
+const { validateJson, upgradeProject, mergeJson, getVersion, logger, writeReleasesJson } = require('./libs/utils')
+const writeLunrIndex = require('./libs/lunr-utils')
+const app = require('commander')
+const getConfig = require('./config')
+const JsonFile = require('jsonfile')
+const path = require('path')
 
 const agencyRepoCount = {}
-
-const winston = require('winston')
-const logger = new(winston.Logger)({
-  level: 'info',
-  transports: [
-    new(winston.transports.Console)({
-      colorize: true,
-      prettyPrint: true,
-      timestamp: true
-    }),
-    new(winston.transports.File)({
-      name: 'general-logger',
-      filename: 'harvester.log.json',
-      timestamp: true
-    }),
-    new(winston.transports.File)({
-      name: 'error-logger',
-      filename: 'harvester-errors.log.json',
-      level: 'error',
-      timestamp: true
-    })
-  ]
-})
 
 function getCodeJson(requestOptions) {
   return request.get(requestOptions)
@@ -84,7 +64,7 @@ function getCodeJson(requestOptions) {
     })
 }
 
-function main(addresses) {
+function main(config, addresses) {
   Promise.all(
     addresses.map((address) => {
       const requestOptions = {
@@ -92,12 +72,14 @@ function main(addresses) {
         rejectUnauthorized: false,
         headers: {
           'Accept': 'application/json',
-          'User-Agent': 'code.gov'
+          'User-Agent': config.userAgent
         }
       }
       return getCodeJson(requestOptions)
     }))
     .then(function (allCodeJsons) {
+      const dataDirPath = path.join(__dirname, config.dataDir)
+
       let finalReleasesJson = allCodeJsons.map(function (codeJson) {
         return codeJson.releases.map(function (release) {
           
@@ -122,35 +104,26 @@ function main(addresses) {
           }, releasesJson)
         }, {})
 
-      const defaultReleases = require('./data/defaultReleases.json')
-      finalReleasesJson = mergeJson(finalReleasesJson, defaultReleases.releases)
+      // Don't think I need this ... We may not want to set a "default"
+      // const defaultReleases = JsonFile.readFile(path.join(dataDirPath, 'defaultReleases.json'))
+      // finalReleasesJson = mergeJson(finalReleasesJson, defaultReleases.releases)
 
-      const releasesString = JSON.stringify({
-        releases: finalReleasesJson
-      })
+      // const releasesString = JSON.stringify({
+      //   releases: finalReleasesJson
+      // })
       const outputTimestamp = (new Date()).toISOString()
 
-      fs.writeFile(`./data/releases-${outputTimestamp}.json`, releasesString, 'utf8', function (err) {
-        if (err) {
-          logger.error(err)
-        }
-      })
 
-      const releasesIndex = lunr(function () {
-        this.ref('id')
-        this.field('name')
-        this.field('agency')
-        this.field('description')
+      writeReleasesJson({releases: finalReleasesJson},
+        path.join(__dirname, dataDirPath, `releasesIndex-${outputTimestamp}.json`)
+      )
 
-        Object.values(finalReleasesJson).forEach(repo => this.add(repo))
-      })
+      writeLunrIndex({releases: finalReleasesJson}, 
+        path.join(__dirname, dataDirPath, `releasesIndex-${outputTimestamp}.json`), 
+        ['name', 'agency', 'description']
+      )
 
-      fs.writeFile(`./data/releasesIndex-${outputTimestamp}.json`, JSON.stringify(releasesIndex.toJSON()), 'utf8', function (err) {
-        if (err) {
-          logger.error(err)
-        }
-      })
-      fs.writeFile('./data/processed_agency_repo_count.json', JSON.stringify(agencyRepoCount), 'utf8', function (err) {
+      fs.writeFile(path.join(__dirname, dataDirPath, 'processed_agency_repo_count.json'), JSON.stringify(agencyRepoCount), 'utf8', function (err) {
         if (err) {
           logger.error(err)
         }
@@ -164,33 +137,44 @@ function main(addresses) {
     
 }
 
-logger.info('[STARTED]: Code.json processing')
-main([
-  'https://usaid.gov/code.json',
-  'https://consumerfinance.gov/code.json',
-  'https://www.dhs.gov/code.json',
-  'https://www.commerce.gov/code.json',
-  'https://www.defense.gov/code.json',
-  'https://energy.gov/code.json',
-  'https://data.doi.gov/code.json',
-  'https://justice.gov/code.json',
-  'https://www.dol.gov/code.json',
-  'http://state.gov/code.json',
-  'https://www.transportation.gov/code.json',
-  'https://www2.ed.gov/code.json',
-  'https://epa.gov/code.json',
-  'https://fema.gov/code.json',
-  'https://gsa.gov/code.json',
-  'https://hhs.gov/code.json',
-  'https://www.hud.gov/code.json',
-  'https://www.archives.gov/code.json',
-  'https://code.nasa.gov/code.json',
-  'https://www.nrc.gov/code.json',
-  'https://nsf.gov/code.json',
-  'https://opm.gov/code.json',
-  'https://sba.gov/code.json',
-  'https://www.ssa.gov/code.json',
-  'https://www.treasury.gov/code.json',
-  'https://www.usda.gov/code.json',
-  'https://va.gov/code.json',
-])
+app.version(getVersion())
+  .option('-o | --output <path>', 'Output path for result files.')
+  .option('-a | --agencies <agencies...>', 'List of agencies to process. Passed values should be agency\'s acronym (Eg. DOD, HHS, GSA). Default is [all].')
+  .action((output, agencies) => {
+    logger.info('[STARTED]: Code.json processing')
+    if(!agencies) {
+      // TODO: needs to have way to look up url by agency acronym
+      agencies = [
+        'https://usaid.gov/code.json',
+        'https://consumerfinance.gov/code.json',
+        'https://www.dhs.gov/code.json',
+        'https://www.commerce.gov/code.json',
+        'https://www.defense.gov/code.json',
+        'https://energy.gov/code.json',
+        'https://data.doi.gov/code.json',
+        'https://justice.gov/code.json',
+        'https://www.dol.gov/code.json',
+        'http://state.gov/code.json',
+        'https://www.transportation.gov/code.json',
+        'https://www2.ed.gov/code.json',
+        'https://epa.gov/code.json',
+        'https://fema.gov/code.json',
+        'https://gsa.gov/code.json',
+        'https://hhs.gov/code.json',
+        'https://www.hud.gov/code.json',
+        'https://www.archives.gov/code.json',
+        'https://code.nasa.gov/code.json',
+        'https://www.nrc.gov/code.json',
+        'https://nsf.gov/code.json',
+        'https://opm.gov/code.json',
+        'https://sba.gov/code.json',
+        'https://www.ssa.gov/code.json',
+        'https://www.treasury.gov/code.json',
+        'https://www.usda.gov/code.json',
+        'https://va.gov/code.json',
+      ]
+    }
+
+    const config = getConfig({ outputPath: app.output})
+    main(config, agencies)
+  })
