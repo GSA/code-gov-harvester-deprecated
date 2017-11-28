@@ -173,7 +173,7 @@ main([
   'https://www.defense.gov/code.json',
   'https://energy.gov/code.json',
   'https://data.doi.gov/code.json',
-  'https://justice.gov/code.json',
+  'https://www.justice.gov/code.json',
   'https://www.dol.gov/code.json',
   'http://state.gov/code.json',
   'https://www.transportation.gov/code.json',
