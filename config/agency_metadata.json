@@ -1,0 +1,146 @@
+{
+  "USDA": {
+    "name": "Department of Agriculture",
+    "website": "https://usda.gov/",
+    "codeUrl": "https://www.usda.gov/code.json"
+  },
+  "DOC": {
+    "name": "Department of Commerce",
+    "website": "https://www.commerce.gov/",
+    "codeUrl": "https://www.commerce.gov/code.json"
+  },
+  "DOD": {
+    "name": "Department of Defense",
+    "website": "https://www.defense.gov/",
+    "codeUrl": "https://www.defense.gov/code.json"
+  },
+  "ED": {
+    "name": "Department of Education",
+    "website": "http://www.ed.gov/",
+    "codeUrl": "https://www2.ed.gov/code.json"
+  },
+  "DOE": {
+    "name": "Department of Energy",
+    "website": "https://energy.gov/",
+    "codeUrl": "https://energy.gov/code.json"
+  },
+  "HHS": {
+    "name": "Department of Health and Human Services",
+    "website": "https://hhs.gov",
+    "codeUrl": "https://hhs.gov/code.json"
+  },
+  "HUD": {
+    "name": "Department of Housing and Urban Development",
+    "website": "https://www.hud.gov/",
+    "codeUrl": "https://www.hud.gov/code.json"
+  },
+  "DHS": {
+    "name": "Department of Homeland Security",
+    "website": "https://dhs.gov",
+    "codeUrl": "https://dhs.gov/code.json"
+  },
+  "DOI": {
+    "name": "Department of Interior",
+    "website": "https://data.doi.gov/",
+    "codeUrl": "https://data.doi.gov/code.json"
+  },
+  "DOJ": {
+    "name": "Department of Justice",
+    "website": "https://justice.gov",
+    "codeUrl": "https://justice.gov/code.json"
+  },
+  "DOL": {
+    "name": "Department of Labor",
+    "website": "https://www.dol.gov",
+    "codeUrl": "https://www.dol.gov/code.json"
+  },
+  "DOS": {
+    "name": "Department of State",
+    "website": "https://state.gov/",
+    "codeUrl": "http://state.gov/code.json"
+  },
+  "DOT": {
+    "name": "Department of Transportation",
+    "website": "https://www.transportation.gov/",
+    "codeUrl": "https://www.transportation.gov/code.json"
+  },
+  "TRE": {
+    "name": "Department of Treasury",
+    "website": "https://www.treasury.gov/",
+    "codeUrl": "https://www.treasury.gov/code.json"
+  },
+  "VA": {
+    "name": "Department of Veterans Affairs",
+    "website": "https://va.gov/",
+    "codeUrl": "https://va.gov/code.json"
+  },
+  "EPA": {
+    "name": "Environmental Protection Agency",
+    "website": "https://epa.gov/",
+    "codeUrl": "https://epa.gov/code.json"
+  },
+  "NASA": {
+    "name": "National Aeronautics and Space Administration",
+    "website": "https://nasa.gov/",
+    "codeUrl": "https://code.nasa.gov/code.json"
+  },
+  "AID": {
+    "id": 17,
+    "name": "Agency for International Development",
+    "acronym": ,
+    "website": "https://usaid.gov/",
+    "codeUrl": "https://usaid.gov/code.json"
+  },
+  "FEMA": {
+    "id": 18,
+    "name": "Federal Emergency Management Agency",
+    "acronym": ,
+    "website": "https://fema.gov/",
+    "codeUrl": "https://fema.gov/code.json"
+  },
+  "GSA": {
+    "name": "General Services Administration",
+    "website": "https://gsa.gov/",
+    "codeUrl": "https://gsa.gov/code.json"
+  },
+  "NSF": {
+    "name": "National Science Foundation",
+    "website": "https://nsf.gov/",
+    "codeUrl": "https://nsf.gov/code.json"
+  },
+  "NRC": {
+    "name": "Nuclear Regulatory Commission",
+    "website": "https://www.nrc.gov/",
+    "codeUrl": "https://www.nrc.gov/code.json"
+  },
+  "OPM": {
+    "name": "Office of Personnel Management",
+    "website": "https://opm.gov/",
+    "codeUrl": "https://opm.gov/code.json"
+  },
+  "SBA": {
+    "name": "Small Business Administration",
+    "website": "https://sba.gov/",
+    "codeUrl": "https://sba.gov/code.json"
+  },
+  "NARA": {
+    "name": "National Archives",
+    "website": "https://archives.gov/",
+    "codeUrl": "https://archives.gov/code.json"
+  },
+  "CFPB": {
+    "name": "Consumer Financial Protection Bureau",
+    "website": "https://consumerfinance.gov/",
+    "codeUrl": "https://consumerfinance.gov/code.json"
+  },
+  "EOP": {
+    "name": "White House - Executive Office of the President",
+    "website": "https://whitehouse.gov/",
+    "codeUrl": "https://whitehouse.gov/code.json"
+  },
+  "SSA": {
+    "name": "Social Security Administration",
+    "website": "https://www.ssa.gov",
+    "codeUrl": "https://www.ssa.gov/code.json"
+  }
+}

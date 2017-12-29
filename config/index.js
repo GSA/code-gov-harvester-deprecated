@@ -1,4 +1,5 @@
 const path = require('path')
+const JsonFile = require('jsonfile')
 
 function getConfig(options) {
   let dataDir = path.join(__dirname, 'data')
@@ -8,7 +9,8 @@ function getConfig(options) {
   let loggerFilename = 'harvester.log.json'
   let loggerErrorFilename = 'harvester-errors.log.json'
   let requestUserAgent = 'code.gov'
-  
+  const defaultAgencies = JsonFile.readFileSync('./agency_metadata.json', {encoding: 'utf8'})
+
   if(process.env.NODE_ENV === 'prod' || process.env.NODE_ENV === 'production') {
     loggerLevel = 'info'
   }
@@ -24,7 +26,8 @@ function getConfig(options) {
     loggerLevel,
     loggerFilename,
     loggerErrorFilename,
-    requestUserAgent
+    requestUserAgent,
+    defaultAgencies
   }
 }
 
