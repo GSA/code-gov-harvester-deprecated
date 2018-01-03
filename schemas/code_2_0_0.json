@@ -90,7 +90,8 @@
                     "exemptByNationalSecurity",
                     "exemptByAgencySystem",
                     "exemptByAgencyMission",
-                    "exemptByCIO"
+                    "exemptByCIO",
+                    "exemptByPolicyDate"
                   ],
                   "additionalProperties": false
                 },
