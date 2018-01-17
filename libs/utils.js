@@ -19,7 +19,8 @@ function _getSchema (json) {
 
 function validateJson(data) {
   const ajv = Ajv({
-    validateSchema: false
+    validateSchema: false,
+    allErrors: true
   })
   ajv.addMetaSchema(require('ajv/lib/refs/json-schema-draft-04.json'))
   const schema = _getSchema(data)
@@ -152,8 +153,63 @@ function mergeJson(mergeTo, mergeFrom) {
   return mergeTo
 }
 
+function getAgencyStatus(agency, isCodeJsonValid) {
+  const overallCompliance = calculateOverallCompliance(agency.requirements)
+  let status = 'NOT COMPLIANT'
+
+  if(isCodeJsonValid){
+    if(overallCompliance >= 1) {
+      status = 'FULLY COMPLIANT'
+    } else if(overallCompliance > 0 && overallCompliance < 1) {
+      status = 'PARTIALY COMPLIANT'
+    }
+  }
+
+  agency.requirements.overallCompliance = overallCompliance
+  return status
+}
+function getCounts(list) {
+  let counts = {}
+
+  list.forEach(item => {
+    if (counts.hasOwnProperty(item)) {
+      counts[item] += 1  
+    } else {
+      counts[item] = 1
+    }
+  })
+
+  return counts
+}
+function calculateMean(values) {
+  return values.reduce((total, currentValue) => total + currentValue) / values.length
+}
+function calculateOverallCompliance(requirements) {
+  // overallCompliance should be:
+  //  - 0 if 2 or more compliances are 0
+  //  - 1 if all 3 are 1
+  //  - otherwise the average of the requirements
+  //
+  // TODO: align this approach with project-open-data's approach
+  const compliances = [
+    requirements.agencyWidePolicy,
+    requirements.openSourceRequirement,
+    requirements.inventoryRequirement
+  ]
+
+  const counts = getCounts(compliances)
+
+  if (counts['0'] === 2) {
+    return 0
+  } else {
+    // If all are 1 then 1 for all
+    return calculateMean(compliances)
+  }
+}
 module.exports = {
   validateJson,
   upgradeProject,
-  mergeJson
+  mergeJson,
+  calculateOverallCompliance,
+  getAgencyStatus
 }
