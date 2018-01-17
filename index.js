@@ -3,9 +3,9 @@ const request = require('request-promise')
 const errors = require('request-promise/errors')
 const fs = require('fs')
 const lunr = require('lunr')
-const { validateJson } = require('./libs/utils')
-const { upgradeProject } = require('./libs/utils')
-const { mergeJson } = require('./libs/utils')
+const { validateJson, upgradeProject, mergeJson, calculateOverallCompliance, getAgencyStatus } = require('./libs/utils')
+const Reporter  = require('./libs/reporter')
+const JsonFile = require('jsonfile')
 
 const agencyRepoCount = {}
 
@@ -32,70 +32,112 @@ const logger = new(winston.Logger)({
   ]
 })
 
-function getCodeJson(requestOptions) {
+function validate(data, agency, reporter) {
+  const results = validateJson(data)
+
+  if (results.errors) {
+    reporter.reportIssues(data.agency, results)
+    return false
+  }
+
+  agency.requirements.schemaFormat = 1
+  return true
+}
+function format(data) {
+  logger.info(`Formatting data from Agency: ${data.agency}`)
+
+  if (data.version === '1.0.1' || data.hasOwnProperty('projects')) {
+    data.releases = data.projects.map(upgradeProject)
+    return data
+  } else if (data.version === '2.0.0' || data.hasOwnProperty('releases')) {
+    return data
+  } else {
+    throw `JSON found at URL: ${requestOptions.uri} for Agency: ${data.agency} is of the wrong version or does not have the properties to determine it.`
+  }
+}
+function writeReleasesFiles(releasesJson) {
+  const releasesString = JSON.stringify({
+    releases: releasesJson
+  })
+  const outputTimestamp = (new Date()).toISOString()
+
+  fs.writeFile(`./data/releases-${outputTimestamp}.json`, releasesString, 'utf8', function (err) {
+    if (err) {
+      logger.error(err)
+    }
+  })
+
+  const releasesIndex = lunr(function () {
+    this.ref('id')
+    this.field('name')
+    this.field('agency')
+    this.field('description')
+
+    Object.values(releasesJson).forEach(repo => this.add(repo))
+  })
+
+  fs.writeFile(`./data/releasesIndex-${outputTimestamp}.json`, JSON.stringify(releasesIndex.toJSON()), 'utf8', function (err) {
+    if (err) {
+      logger.error(err)
+    }
+  })
+}
+function getCodeJson(requestOptions, agencyMetadata, reporter) {
   return request.get(requestOptions)
     .then(function (json) {
-      logger.info(`Validating JSON from ${requestOptions.uri}`)
+      logger.info(`Validating JSON for Agency: ${agencyMetadata.acronym}`)
       let formattedData
       let validationErrorMsg
 
       try {
         formattedData = JSON.parse(json.replace(/^\uFEFF/, ''))
       } catch (err) {
-        throw new Error(`Error formatting code.json for ${requestOptions.uri} - `, err)
+        throw `Error formatting code.json for Agency: ${agencyMetadata.acronym} - `, err
+      }
+      
+      reporter.reportVersion(formattedData.agency, formattedData.version)
+      reporter.reportMetadata(formattedData.agency, agencyMetadata)
+
+      const isCodeJsonValid = validate(formattedData, agencyMetadata, reporter)
+      const agencyStatus = getAgencyStatus(agencyMetadata, isCodeJsonValid)
+      reporter.reportStatus(agencyMetadata.acronym, agencyStatus)
+      reporter.reportRequirements(agencyMetadata.acronym, agencyMetadata.requirements)
+
+      if (!isCodeJsonValid) {
+        throw `Agency: ${agencyMetadata.acronym} has not passed schema validation.`
       }
 
-      const results = validateJson(formattedData)
+      return format(formattedData)
 
-      if (results.errors) {
-        validationErrorMsg = `Repo: ${requestOptions.uri} has not passed schema validation. Errors: `
-        results.errors.forEach(function (error) {
-          validationErrorMsg += `Error type: ${error.keyword} ${error.dataPath} ${error.message} | `
-        })
-        throw new Error(validationErrorMsg)
-      }
-
-      if (formattedData.version === '1.0.1' || formattedData.hasOwnProperty('projects')) {
-        formattedData.releases = formattedData.projects.map(upgradeProject)
-        return formattedData
-      } else if (formattedData.version === '2.0.0' || formattedData.hasOwnProperty('releases')) {
-        return formattedData
-      } else {
-        throw new Error(`JSON found at URL: ${requestOptions.uri} is of the wrong version or does not have the properties to determine it.`)
-      }
     })
     .catch(errors.StatusCodeError, function (reason) {
       logger.error(`error loading: ${requestOptions.uri} - reason: statusCode ${reason.statusCode}`)
-      return {
-        releases: []
-      }
+      return { releases: [] }
     })
     .catch(errors.RequestError, function (reason) {
       logger.error(`error loading: ${requestOptions.uri} - reason: ${reason.cause}`)
-      return {
-        releases: []
-      }
+      return { releases: [] }
     })
-    .catch(function (err) {
-      logger.error(err)
-      return {
-        releases: []
-      }
+    .catch(function (error) {
+      logger.error(`Agency: ${agencyMetadata.acronym}`, error)
+
+      return { releases: [] }
     })
 }
 
-function main(addresses) {
+function main(agencies, reporter) {
   Promise.all(
-    addresses.map((address) => {
+    agencies.map((agency) => {
       const requestOptions = {
-        uri: address,
+        uri: agency.codeUrl,
         rejectUnauthorized: false,
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'code.gov'
-        }
+        },
+        gzip: true
       }
-      return getCodeJson(requestOptions)
+      return getCodeJson(requestOptions, agency, reporter)
     }))
     .then(function (allCodeJsons) {
       let finalReleasesJson = allCodeJsons.map(function (codeJson) {
@@ -122,39 +164,15 @@ function main(addresses) {
           }, releasesJson)
         }, {})
 
-      const defaultReleases = require('./data/defaultReleases.json')
-      finalReleasesJson = mergeJson(finalReleasesJson, defaultReleases.releases)
+      writeReleasesFiles(finalReleasesJson)
 
-      const releasesString = JSON.stringify({
-        releases: finalReleasesJson
-      })
-      const outputTimestamp = (new Date()).toISOString()
-
-      fs.writeFile(`./data/releases-${outputTimestamp}.json`, releasesString, 'utf8', function (err) {
-        if (err) {
-          logger.error(err)
-        }
-      })
-
-      const releasesIndex = lunr(function () {
-        this.ref('id')
-        this.field('name')
-        this.field('agency')
-        this.field('description')
-
-        Object.values(finalReleasesJson).forEach(repo => this.add(repo))
-      })
-
-      fs.writeFile(`./data/releasesIndex-${outputTimestamp}.json`, JSON.stringify(releasesIndex.toJSON()), 'utf8', function (err) {
-        if (err) {
-          logger.error(err)
-        }
-      })
       fs.writeFile('./data/processed_agency_repo_count.json', JSON.stringify(agencyRepoCount), 'utf8', function (err) {
         if (err) {
           logger.error(err)
         }
       })
+
+      reporter.writeReportToFile()
 
       logger.info('[FINISHED]: Code.json processing')
     })
@@ -166,32 +184,7 @@ function main(addresses) {
 
 logger.info('[STARTED]: Code.json processing')
 
-main([
-  'https://www.usda.gov/code.json',
-  'https://www.commerce.gov/code.json',
-  'https://www.defense.gov/code.json',
-  'https://www.ed.gov/code.json',
-  'https://www.energy.gov/code.json',
-  'https://www.hhs.gov/code.json',
-  'https://www.dhs.gov/code.json',
-  'https://www.hud.gov/code.json',
-  'https://www.justice.gov/code.json',
-  'https://www.dol.gov/code.json',
-  'https://www.state.gov/code.json',
-  'https://www.doi.gov/code.json',
-  'https://www.treasury.gov/code.json',
-  'https://www.transportation.gov/code.json',
-  'https://www.va.gov/code.json',
-  'https://www.epa.gov/code.json',
-  'https://www.gsa.gov/code.json',
-  'https://code.nasa.gov/code.json',
-  'https://www.nsf.gov/code.json',
-  'https://www.nrc.gov/code.json',
-  'https://www.opm.gov/code.json',
-  'https://www.sba.gov/code.json',
-  'https://www.ssa.gov/code.json',
-  'https://www.usaid.gov/code.json',
-  'https://www.archives.gov/code.json',
-  'https://www.consumerfinance.gov/code.json',
-])
-
+const reporter = new Reporter({REPORT_FILEPATH: './data/report.json'}, logger)
+JsonFile.readFile('./data/agencyMetadata.json', (error, agencies) => {
+  main(agencies, reporter)
+})
