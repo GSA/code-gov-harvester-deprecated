@@ -60,6 +60,7 @@ typings/
 .vscode
 releases*.json
 processed_agency_repo_count*.json
+report.json
 *.zip
 .DS_Store
 
