@@ -99,7 +99,8 @@ function getCodeJson(requestOptions, agencyMetadata, reporter) {
       reporter.reportMetadata(formattedData.agency, agencyMetadata)
 
       const isCodeJsonValid = validate(formattedData, agencyMetadata, reporter)
-      const agencyStatus = getAgencyStatus(agencyMetadata, isCodeJsonValid)
+      const agencyStatus = getAgencyStatus(agencyMetadata)
+
       reporter.reportStatus(agencyMetadata.acronym, agencyStatus)
       reporter.reportRequirements(agencyMetadata.acronym, agencyMetadata.requirements)
 

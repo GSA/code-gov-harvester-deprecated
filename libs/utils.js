@@ -153,16 +153,14 @@ function mergeJson(mergeTo, mergeFrom) {
   return mergeTo
 }
 
-function getAgencyStatus(agency, isCodeJsonValid) {
+function getAgencyStatus(agency) {
   const overallCompliance = calculateOverallCompliance(agency.requirements)
   let status = 'NOT COMPLIANT'
 
-  if(isCodeJsonValid){
-    if(overallCompliance >= 1) {
-      status = 'FULLY COMPLIANT'
-    } else if(overallCompliance > 0 && overallCompliance < 1) {
-      status = 'PARTIALY COMPLIANT'
-    }
+  if(overallCompliance >= 1) {
+    status = 'FULLY COMPLIANT'
+  } else if(overallCompliance > 0 && overallCompliance < 1) {
+    status = 'PARTIALY COMPLIANT'
   }
 
   agency.requirements.overallCompliance = overallCompliance
