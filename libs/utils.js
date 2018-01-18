@@ -9,9 +9,9 @@ const Ajv = require('ajv')
  */
 function _getSchema (json) {
   if (json.version === '1.0.1' || json.hasOwnProperty('projects')) {
-    return schema = require('../schemas/code_1_0_1.json')
+    return require('../schemas/code_1_0_1.json')
   } else if (json.version === '2.0.0' || json.hasOwnProperty('releases')) {
-    return schema = require('../schemas/code_2_0_0.json')
+    return require('../schemas/code_2_0_0.json')
   } else {
     throw new Error(`Version for ${json.agency} not obtainable. JSON has wrong version number or does not have necessary properties to determine it.`)
   }
@@ -54,7 +54,7 @@ function _upgradeToPermissions(project) {
     project.permissions.licenses.push({
       URL: project.license,
       name: null
-    });
+    })
   } else {
     project.permissions.licenses.push({
       URL: null,
@@ -113,11 +113,11 @@ function _upgradeUpdatedToDate(project) {
 
   if (project.updated) {
     if (project.updated.sourceCodeLastModified) {
-      project.date.lastModified = project.updated.sourceCodeLastModified;
+      project.date.lastModified = project.updated.sourceCodeLastModified
     }
 
     if (project.updated.metadataLastUpdated) {
-      project.date.metadataLastUpdated = project.updated.metadataLastUpdated;
+      project.date.metadataLastUpdated = project.updated.metadataLastUpdated
     }
 
     delete project.updated
@@ -166,28 +166,10 @@ function getAgencyStatus(agency) {
   agency.requirements.overallCompliance = overallCompliance
   return status
 }
-function getCounts(list) {
-  let counts = {}
-
-  list.forEach(item => {
-    if (counts.hasOwnProperty(item)) {
-      counts[item] += 1  
-    } else {
-      counts[item] = 1
-    }
-  })
-
-  return counts
-}
 function calculateMean(values) {
   return values.reduce((total, currentValue) => total + currentValue) / values.length
 }
 function calculateOverallCompliance(requirements) {
-  // overallCompliance should be:
-  //  - 0 if 2 or more compliances are 0
-  //  - 1 if all 3 are 1
-  //  - otherwise the average of the requirements
-  //
   // TODO: align this approach with project-open-data's approach
   const compliances = [
     requirements.agencyWidePolicy,
@@ -195,19 +177,23 @@ function calculateOverallCompliance(requirements) {
     requirements.inventoryRequirement
   ]
 
-  const counts = getCounts(compliances)
-
-  if (counts['0'] === 2) {
-    return 0
-  } else {
-    // If all are 1 then 1 for all
-    return calculateMean(compliances)
-  }
+  return calculateMean(compliances)
 }
+
+function handleError(errorMsg, agencyMetadata, logger, reporter) {
+  logger.error(errorMsg)
+  if(!reporter.report.statuses[agencyMetadata.acronym]) {
+    reporter.reportVersion(agencyMetadata.acronym, 'N/A')
+  }
+  reporter.reportMetadata(agencyMetadata.acronym, agencyMetadata)
+  reporter.reportIssues(agencyMetadata.acronym, {errors:[ {error: errorMsg} ]})
+}
+
 module.exports = {
   validateJson,
   upgradeProject,
   mergeJson,
   calculateOverallCompliance,
-  getAgencyStatus
+  getAgencyStatus,
+  handleError
 }

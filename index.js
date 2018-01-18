@@ -3,7 +3,7 @@ const request = require('request-promise')
 const errors = require('request-promise/errors')
 const fs = require('fs')
 const lunr = require('lunr')
-const { validateJson, upgradeProject, mergeJson, calculateOverallCompliance, getAgencyStatus } = require('./libs/utils')
+const { validateJson, upgradeProject, getAgencyStatus, handleError } = require('./libs/utils')
 const Reporter  = require('./libs/reporter')
 const JsonFile = require('jsonfile')
 
@@ -52,7 +52,7 @@ function format(data) {
   } else if (data.version === '2.0.0' || data.hasOwnProperty('releases')) {
     return data
   } else {
-    throw `JSON found at URL: ${requestOptions.uri} for Agency: ${data.agency} is of the wrong version or does not have the properties to determine it.`
+    throw `JSON Agency: ${data.agency} is of the wrong version or does not have the properties to determine it.`
   }
 }
 function writeReleasesFiles(releasesJson) {
@@ -87,7 +87,6 @@ function getCodeJson(requestOptions, agencyMetadata, reporter) {
     .then(function (json) {
       logger.info(`Validating JSON for Agency: ${agencyMetadata.acronym}`)
       let formattedData
-      let validationErrorMsg
 
       try {
         formattedData = JSON.parse(json.replace(/^\uFEFF/, ''))
@@ -99,10 +98,6 @@ function getCodeJson(requestOptions, agencyMetadata, reporter) {
       reporter.reportMetadata(formattedData.agency, agencyMetadata)
 
       const isCodeJsonValid = validate(formattedData, agencyMetadata, reporter)
-      const agencyStatus = getAgencyStatus(agencyMetadata)
-
-      reporter.reportStatus(agencyMetadata.acronym, agencyStatus)
-      reporter.reportRequirements(agencyMetadata.acronym, agencyMetadata.requirements)
 
       if (!isCodeJsonValid) {
         throw `Agency: ${agencyMetadata.acronym} has not passed schema validation.`
@@ -112,17 +107,22 @@ function getCodeJson(requestOptions, agencyMetadata, reporter) {
 
     })
     .catch(errors.StatusCodeError, function (reason) {
-      logger.error(`error loading: ${requestOptions.uri} - reason: statusCode ${reason.statusCode}`)
+      handleError(`error loading: ${requestOptions.uri} - reason: statusCode ${reason.statusCode}`, agencyMetadata, logger, reporter)
       return { releases: [] }
     })
     .catch(errors.RequestError, function (reason) {
-      logger.error(`error loading: ${requestOptions.uri} - reason: ${reason.cause}`)
+      handleError(`error loading: ${requestOptions.uri} - reason: ${reason.cause}`, agencyMetadata, logger, reporter)
       return { releases: [] }
     })
     .catch(function (error) {
-      logger.error(`Agency: ${agencyMetadata.acronym}`, error)
-
+      handleError(`Agency: ${agencyMetadata.acronym} - Error: ${error}`, agencyMetadata, logger, reporter)
       return { releases: [] }
+    })
+    .finally(() => {
+      const agencyStatus = getAgencyStatus(agencyMetadata)
+
+      reporter.reportStatus(agencyMetadata.acronym, agencyStatus)
+      reporter.reportRequirements(agencyMetadata.acronym, agencyMetadata.requirements)
     })
 }
 

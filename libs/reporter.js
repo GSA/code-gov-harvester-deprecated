@@ -39,7 +39,7 @@ class Reporter {
 
   reportIssues(itemName, issuesObj) {
     this._createReportItemIfDoesntExist(itemName)
-    this.report.statuses[itemName]['issues'].push(issuesObj.errors)
+    issuesObj.errors.forEach(error => this.report.statuses[itemName]['issues'].push(error))
   }
 
   reportVersion(itemName, version) {
