@@ -212,7 +212,7 @@
       "website": "https://epa.gov/",
       "codeUrl": "https://www.epa.gov/code.json",
       "requirements": {
-        "agencyWidePolicy": 0,
+        "agencyWidePolicy": 0.75,
         "openSourceRequirement": 0.5,
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
