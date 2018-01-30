@@ -10,7 +10,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 2,
@@ -24,7 +25,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 3,
@@ -38,7 +40,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 4,
@@ -52,7 +55,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 5,
@@ -66,7 +70,8 @@
         "inventoryRequirement": 1,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 6,
@@ -80,7 +85,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 7,
@@ -94,7 +100,8 @@
         "inventoryRequirement": 1,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 8,
@@ -108,7 +115,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 9,
@@ -122,7 +130,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 10,
@@ -136,7 +145,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     }, {
       "id": 11,
       "name": "Department of Labor",
@@ -149,7 +159,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 12,
@@ -163,7 +174,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 13,
@@ -177,7 +189,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     },
     {
       "id": 14,
@@ -191,7 +204,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     }, {
       "id": 15,
       "name": "Department of Veterans Affairs",
@@ -204,7 +218,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     }, {
       "id": 16,
       "name": "Environmental Protection Agency",
@@ -217,7 +232,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     }, {
       "id": 17,
       "name": "National Aeronautics and Space Administration",
@@ -230,7 +246,8 @@
         "inventoryRequirement": 0.5,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     }, {
       "id": 18,
       "name": "Agency for International Development",
@@ -243,7 +260,8 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     }, {
       "id": 19,
       "name": "General Services Administration",
@@ -256,7 +274,8 @@
         "inventoryRequirement": 1,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
     }, {
       "id": 20,
       "name": "National Science Foundation",
@@ -269,9 +288,9 @@
         "inventoryRequirement": 1,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
-    },
-    {
+      },
+      "complianceDashboard": true
+    }, {
       "id": 21,
       "name": "Nuclear Regulatory Commission",
       "acronym": "NRC",
@@ -283,9 +302,9 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
-    },
-    {
+      },
+      "complianceDashboard": true
+    }, {
       "id": 22,
       "name": "Office of Personnel Management",
       "acronym": "OPM",
@@ -297,9 +316,9 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
-    },
-    {
+      },
+      "complianceDashboard": true
+    }, {
       "id": 23,
       "name": "Small Business Administration",
       "acronym": "SBA",
@@ -311,9 +330,9 @@
         "inventoryRequirement": 0,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
-    },
-    {
+      },
+      "complianceDashboard": true
+    }, {
       "id": 24,
       "name": "National Archives",
       "acronym": "NARA",
@@ -325,9 +344,9 @@
         "inventoryRequirement": 0.5,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
-    },
-    {
+      },
+      "complianceDashboard": true
+    }, {
       "id": 25,
       "name": "Social Security Administration",
       "acronym": "SSA",
@@ -339,6 +358,21 @@
         "inventoryRequirement": 0.5,
         "schemaFormat": 0.5,
         "overallCompliance": 0
-      }
+      },
+      "complianceDashboard": true
+    }, {
+      "id": 26,
+      "name": "Consumer Financial Protection Bureau",
+      "acronym": "CFPB",
+      "website": "https://consumerfinance.gov/",
+      "codeUrl": "https://consumerfinance.gov/code.json",
+      "requirements": {
+        "agencyWidePolicy": null,
+        "openSourceRequirement": null,
+        "inventoryRequirement": null,
+        "schemaFormat": null,
+        "overallCompliance": null
+      },
+      "complianceDashboard": false
     }
   ]
