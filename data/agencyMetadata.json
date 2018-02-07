@@ -374,5 +374,19 @@
         "overallCompliance": null
       },
       "complianceDashboard": false
+    }, {
+      "id": 27,
+      "name": "U.S. Geological Survey",
+      "acronym": "USGS",
+      "website": "https://usgs.gov/",
+      "codeUrl": "https://usgs.gov/code.json",
+      "requirements": {
+        "agencyWidePolicy": null,
+        "openSourceRequirement": null,
+        "inventoryRequirement": null,
+        "schemaFormat": null,
+        "overallCompliance": null
+      },
+      "complianceDashboard": false
     }
   ]
