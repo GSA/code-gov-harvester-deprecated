@@ -182,11 +182,13 @@ function calculateOverallCompliance(requirements) {
 
 function handleError(errorMsg, agencyMetadata, logger, reporter) {
   logger.error(errorMsg)
-  if(!reporter.report.statuses[agencyMetadata.acronym]) {
-    reporter.reportVersion(agencyMetadata.acronym, 'N/A')
+  if (agencyMetadata.complianceDashboard){
+    if(!reporter.report.statuses[agencyMetadata.acronym]) {
+      reporter.reportVersion(agencyMetadata.acronym, 'N/A')
+    }
+    reporter.reportMetadata(agencyMetadata.acronym, agencyMetadata)
+    reporter.reportIssues(agencyMetadata.acronym, {errors:[ {error: errorMsg} ]})
   }
-  reporter.reportMetadata(agencyMetadata.acronym, agencyMetadata)
-  reporter.reportIssues(agencyMetadata.acronym, {errors:[ {error: errorMsg} ]})
 }
 
 module.exports = {

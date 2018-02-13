@@ -194,7 +194,7 @@
     },
     {
       "id": 14,
-      "name": "Department of Treasury",
+      "name": "Department of the Treasury",
       "acronym": "TREASURY",
       "website": "https://www.treasury.gov/",
       "codeUrl": "https://www.treasury.gov/code.json",
@@ -334,7 +334,7 @@
       "complianceDashboard": true
     }, {
       "id": 24,
-      "name": "National Archives",
+      "name": "National Archives and Records Administration",
       "acronym": "NARA",
       "website": "https://archives.gov/",
       "codeUrl": "https://www.archives.gov/code.json",
