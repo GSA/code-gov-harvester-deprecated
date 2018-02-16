@@ -180,7 +180,7 @@
     {
       "id": 13,
       "name": "Department of Transportation",
-      "acronym": "USDOT",
+      "acronym": "DOT",
       "website": "https://www.transportation.gov/",
       "codeUrl": "https://www.transportation.gov/code.json",
       "requirements": {
