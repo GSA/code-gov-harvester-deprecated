@@ -70,7 +70,7 @@ class Reporter {
       this.logger.info('Writing report to file...')
       this.report.timestamp = (new Date()).toString()
 
-      Jsonfile.writeFile(this.config.REPORT_FILEPATH, this.report, (err) => {
+      Jsonfile.writeFile(this.config.REPORT_FILEPATH, this.report, { spaces: 2 }, (err) => {
         if (err) {
           reject(err)
         }
