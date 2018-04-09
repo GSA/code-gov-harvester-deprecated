@@ -1,0 +1,23 @@
+{
+  "version": "1.0.1",
+  "agency": "DHHS",
+  "projects": [{
+    "name": "ckanext-datajson",
+    "organization": "Department of Health and Human Services",
+    "description": "Custom CKAN extension for HealthData.gov",
+    "license": "http://creativecommons.org/publicdomain/zero/1.0/",
+    "openSourceProject": 1,
+    "governmentWideReuseProject": 1,
+    "tags": [
+      "ckan",
+      "json",
+      "open data"
+    ],
+    "contact": {
+      "email": "ServiceDesk.OCIO.HHS@hhs.gov",
+      "name": "Office of the Chief Information Officer"
+    },
+    "vcs": "git",
+    "repository": "https://github.com/HHS/ckanext-datajson"
+  }]
+}
