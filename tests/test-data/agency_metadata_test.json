@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "name": "Department of Fake",
+    "acronym": "FAKE",
+    "website": "https://fake.gov/",
+    "codeUrl": "https://www.fake.gov/code.json",
+    "fallback_file": "FAKE.json",
+    "requirements": {
+      "agencyWidePolicy": 0.75,
+      "openSourceRequirement": 0,
+      "inventoryRequirement": 0,
+      "schemaFormat": 0.5,
+      "overallCompliance": 0
+    },
+    "complianceDashboard": true
+  }
+]
