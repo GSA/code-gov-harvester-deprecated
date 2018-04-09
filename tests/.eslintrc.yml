@@ -1,0 +1,10 @@
+env:
+  mocha: true
+plugins:
+  - mocha
+rules:
+  mocha/no-mocha-arrows:
+    - error
+  no-unused-vars:
+    - error
+    - varsIgnorePattern: "should|expect"
