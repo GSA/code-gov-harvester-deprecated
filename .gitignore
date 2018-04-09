@@ -66,3 +66,5 @@ report.json
 
 harvester.log.json
 harvester-errors.log.json
+
+/tests/test-data/create-diffs-tests/diffs/FAKE.json
