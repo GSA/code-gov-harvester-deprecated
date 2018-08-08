@@ -1,201 +1,85 @@
-require('core-js/es7/object')
-const request = require('request-promise')
-const errors = require('request-promise/errors')
-const fs = require('fs')
-const lunr = require('lunr')
-const { validateJson, upgradeProject, getAgencyStatus, handleError, mergeJson } = require('./libs/utils')
-const Reporter  = require('./libs/reporter')
-const JsonFile = require('jsonfile')
+const fetch = require('node-fetch');
+const Formatter = require('./libs/formatter');
+const fs = require('fs');
+const { getValidator } = require('@code.gov/code-gov-validator');
+const JsonFile = require('jsonfile');
 
-const agencyRepoCount = {}
+// const Reporter  = require('./libs/reporter');
 
-const winston = require('winston')
-const logger = new(winston.Logger)({
-  level: 'info',
-  transports: [
-    new(winston.transports.Console)({
-      colorize: true,
-      prettyPrint: true,
-      timestamp: true
-    }),
-    new(winston.transports.File)({
-      name: 'general-logger',
-      filename: 'harvester.log.json',
-      timestamp: true
-    }),
-    new(winston.transports.File)({
-      name: 'error-logger',
-      filename: 'harvester-errors.log.json',
-      level: 'error',
-      timestamp: true
-    })
-  ]
-})
-
-function validate(data, agency, reporter) {
-  const results = validateJson(data)
-
-  if (results.errors) {
-    if(agency.complianceDashboard) {
-      reporter.reportIssues(data.agency, results)
-    }
-    
-    return false
-  }
-
-  agency.requirements.schemaFormat = 1
-  return true
-}
-function format(data) {
-  logger.info(`Formatting data from Agency: ${data.agency}`)
-
-  if (data.version === '1.0.1' || data.hasOwnProperty('projects')) {
-    data.releases = data.projects.map(upgradeProject)
-    return data
-  } else if (data.version === '2.0.0' || data.hasOwnProperty('releases')) {
-    return data
-  } else {
-    throw `JSON Agency: ${data.agency} is of the wrong version or does not have the properties to determine it.`
+/**
+ * Fetches JSON data from supplied URL
+ * @param {string} jsonUrl Valid URL from whre to fetch the JSON data
+ * @returns Returns a promise object that resolves into JSON data
+ */
+async function getCodeJson(jsonUrl) {
+  try {
+    const result = await fetch(jsonUrl, {
+      headers: {
+        'User-Agent': 'code.gov',
+        'Content-Type': 'application/json',
+      }
+    });
+    return result.json();
+  } catch(error) {
+    console.error(error);
   }
 }
-function writeReleasesFiles(releasesJson) {
-  const defaultReleases = JsonFile.readFileSync('./data/defaultReleases.json')
 
-  releasesJson = mergeJson(releasesJson, defaultReleases.releases)
+function createIndex() {
+  // Take a look at ../ code-gov-api/services/indexer/repo/index.js init()
+}
+function indexDocuments() {
+  /**
+   * Take a look at the code-gov-api project. There are some classes that are in charge
+   * of indexing the different indexes and types that are created
+   */
+}
+function optimizeIndex() {
+  // Take a look at ../code-gov-api/services/indexer/index_optimizer.js init()
+}
+function swapIndexAlias() {
+  // Take a look at ../code-gov-api/services/indexer/alias_swapper.js init()
+}
+function cleanIndex() {
+  // Take a look at ../code-gov-api/services/indexer/index_cleaner.js init()
+}
+function generateStatusReport() {
+  // Take a look at ../code-gov-api/services/indexer/repo/AgencyJsonStream.js
+}
 
-  const releasesString = JSON.stringify({
-    releases: releasesJson
-  })
-  const outputTimestamp = (new Date()).toISOString()
+async function main(agencies, reporter) {
+  // Create index with today's timestamp
+  try {
+    for(let agency of agencies) {
+      const jsonData = await getCodeJson(agency.codeUrl);
 
-  fs.writeFile(`./data/releases-${outputTimestamp}.json`, releasesString, 'utf8', function (err) {
-    if (err) {
-      logger.error(err)
+      const validator = getValidator(jsonData);
+
+      for(let repo of jsonData.releases) {
+        const validationResults = await validator.validateRepo(repo, agency);
+        // Calculate complaince dashboard
+        // Index validation Results into status index
+
+        const formatter = new Formatter();
+        const formattedRepo = await formatter.formatRepo(repo, agency, jsonData.version);
+
+        console.log(formattedRepo);
+
+        // Possible flow
+        // index repo
+      }
     }
-  })
-
-  const releasesIndex = lunr(function () {
-    this.ref('id')
-    this.field('name')
-    this.field('agency')
-    this.field('description')
-
-    Object.values(releasesJson).forEach(repo => this.add(repo))
-  })
-
-  fs.writeFile(`./data/releasesIndex-${outputTimestamp}.json`, JSON.stringify(releasesIndex.toJSON()), 'utf8', function (err) {
-    if (err) {
-      logger.error(err)
-    }
-  })
-}
-function getCodeJson(requestOptions, agencyMetadata, reporter) {
-  return request.get(requestOptions)
-    .then(function (json) {
-      logger.info(`Validating JSON for Agency: ${agencyMetadata.acronym}`)
-      let formattedData
-
-      try {
-        formattedData = JSON.parse(json.replace(/^\uFEFF/, ''))
-      } catch (err) {
-        throw `Error formatting code.json for Agency: ${agencyMetadata.acronym} - `, err
-      }
-      
-      if(agencyMetadata.complianceDashboard) {
-        reporter.reportVersion(formattedData.agency, formattedData.version)
-        reporter.reportMetadata(formattedData.agency, agencyMetadata)
-      }
-      const isCodeJsonValid = validate(formattedData, agencyMetadata, reporter)
-
-      if (!isCodeJsonValid) {
-        throw `Agency: ${agencyMetadata.acronym} has not passed schema validation.`
-      }
-
-      return format(formattedData)
-
-    })
-    .catch(errors.StatusCodeError, function (reason) {
-      handleError(`error loading: ${requestOptions.uri} - reason: statusCode ${reason.statusCode}`, agencyMetadata, logger, reporter)
-      return { releases: [] }
-    })
-    .catch(errors.RequestError, function (reason) {
-      handleError(`error loading: ${requestOptions.uri} - reason: ${reason.cause}`, agencyMetadata, logger, reporter)
-      return { releases: [] }
-    })
-    .catch(function (error) {
-      handleError(`Agency: ${agencyMetadata.acronym} - Error: ${error}`, agencyMetadata, logger, reporter)
-      return { releases: [] }
-    })
-    .finally(() => {
-
-      if(agencyMetadata.complianceDashboard) {
-        const agencyStatus = getAgencyStatus(agencyMetadata)
-        reporter.reportStatus(agencyMetadata.acronym, agencyStatus)
-        reporter.reportRequirements(agencyMetadata.acronym, agencyMetadata.requirements)
-      }
-    })
+    // Optimize Index
+    // Swap Index Alias
+    // Clean Indexes
+  } catch(error) {
+    console.error(error);
+  }
 }
 
-function main(agencies, reporter) {
-  Promise.all(
-    agencies.map((agency) => {
-      const requestOptions = {
-        uri: agency.codeUrl,
-        rejectUnauthorized: false,
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'code.gov'
-        },
-        gzip: true
-      }
-      return getCodeJson(requestOptions, agency, reporter)
-    }))
-    .then(function (allCodeJsons) {
-      let finalReleasesJson = allCodeJsons.map(function (codeJson) {
-        return codeJson.releases.map(function (release) {
-          
-          if(agencyRepoCount.hasOwnProperty(codeJson.agency)) {
-            agencyRepoCount[codeJson.agency] += 1
-          } else {
-            agencyRepoCount[codeJson.agency] = 1
-          }
-          
-          const id = encodeURIComponent(codeJson.agency) + '/' + encodeURIComponent(release.name)
+// logger.info('[STARTED]: Code.json processing')
 
-          release.id = id
-          release.agency = codeJson.agency
-
-          return release
-        })
-      })
-        .reduce(function (releasesJson, releases) {
-          return releases.reduce(function (r, release) {
-            r[release.id] = release
-            return r
-          }, releasesJson)
-        }, {})
-
-      writeReleasesFiles(finalReleasesJson)
-
-      fs.writeFile('./data/processed_agency_repo_count.json', JSON.stringify(agencyRepoCount), 'utf8', function (err) {
-        if (err) {
-          logger.error(err)
-        }
-      })
-
-      reporter.writeReportToFile()
-
-      logger.info('[FINISHED]: Code.json processing')
-    })
-    .catch(function (err) {
-      logger.error(err)
-    })
-    
-}
-
-logger.info('[STARTED]: Code.json processing')
-
-const reporter = new Reporter({REPORT_FILEPATH: './data/report.json'}, logger)
-JsonFile.readFile('./data/agencyMetadata.json', (error, agencies) => {
-  main(agencies, reporter)
-})
+// const reporter = new Reporter({REPORT_FILEPATH: './data/report.json'}, logger)
+JsonFile.readFile('./data/data_sources_metadata.json', (error, agencies) => {
+  main(agencies, {});
+});
