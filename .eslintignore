@@ -1,0 +1,7 @@
+node_modules/
+coverage/
+lcov/
+.vscode/
+.nyc_output/
+.circleci/
+.github/
