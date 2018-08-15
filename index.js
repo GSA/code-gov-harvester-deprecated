@@ -1,8 +1,12 @@
 const fetch = require('node-fetch');
-const Formatter = require('./libs/formatter');
-const fs = require('fs');
 const { getValidator } = require('@code.gov/code-gov-validator');
 const JsonFile = require('jsonfile');
+
+const Formatter = require('./libs/formatter');
+const Logger = require('./libs/logger');
+const getIndexer = require('./libs/indexers');
+
+const logger = new Logger({ name: 'harvester-main' });
 
 // const Reporter  = require('./libs/reporter');
 
@@ -21,34 +25,60 @@ async function getCodeJson(jsonUrl) {
     });
     return result.json();
   } catch(error) {
-    console.error(error);
+    logger.error(error);
   }
 }
 
-function createIndex() {
-  // Take a look at ../ code-gov-api/services/indexer/repo/index.js init()
+async function createIndex() {
+  const repoIndexer = getIndexer('repos');
+  try {
+    let elasticSearchResponse;
+    const exists = await repoIndexer.indexExists();
+
+    if(exists) {
+      elasticSearchResponse = await repoIndexer.deleteIndex();
+      logger.debug(elasticSearchResponse);
+    }
+
+    elasticSearchResponse = await repoIndexer.initIndex();
+    logger.debug(elasticSearchResponse);
+
+    elasticSearchResponse = await repoIndexer.initMapping();
+    logger.debug(elasticSearchResponse);
+
+    return repoIndexer;
+  } catch(error) {
+    throw error;
+  }
 }
-function indexDocuments() {
-  /**
-   * Take a look at the code-gov-api project. There are some classes that are in charge
-   * of indexing the different indexes and types that are created
-   */
-}
+
 function optimizeIndex() {
   // Take a look at ../code-gov-api/services/indexer/index_optimizer.js init()
+  return {};
 }
 function swapIndexAlias() {
   // Take a look at ../code-gov-api/services/indexer/alias_swapper.js init()
+  return {};
 }
 function cleanIndex() {
   // Take a look at ../code-gov-api/services/indexer/index_cleaner.js init()
+  return {};
 }
 function generateStatusReport() {
   // Take a look at ../code-gov-api/services/indexer/repo/AgencyJsonStream.js
+  return {};
 }
 
 async function main(agencies, reporter) {
   // Create index with today's timestamp
+  let repoIndexer;
+  try {
+    repoIndexer = await createIndex('repos');
+  } catch(error) {
+    logger.error('Error while creating repo index', error);
+    process.exit();
+  }
+
   try {
     for(let agency of agencies) {
       const jsonData = await getCodeJson(agency.codeUrl);
@@ -57,29 +87,30 @@ async function main(agencies, reporter) {
 
       for(let repo of jsonData.releases) {
         const validationResults = await validator.validateRepo(repo, agency);
-        // Calculate complaince dashboard
-        // Index validation Results into status index
+        // TODO: Calculate complaince dashboard
+        // TODO: Index validation Results into status index
 
         const formatter = new Formatter();
         const formattedRepo = await formatter.formatRepo(repo, agency, jsonData.version);
 
-        console.log(formattedRepo);
+        logger.debug(formattedRepo);
 
-        // Possible flow
-        // index repo
+        repoIndexer.indexDocumet(repo);
       }
     }
-    // Optimize Index
-    // Swap Index Alias
-    // Clean Indexes
+    optimizeIndex();
+    swapIndexAlias();
+    cleanIndex();
   } catch(error) {
-    console.error(error);
+    logger.error(error);
   }
 }
 
-// logger.info('[STARTED]: Code.json processing')
+logger.info('[STARTED]: Code.json processing');
 
 // const reporter = new Reporter({REPORT_FILEPATH: './data/report.json'}, logger)
+
+// should this be a stream? Can this be streamed or yielded as to not have all the json data in memory?
 JsonFile.readFile('./data/data_sources_metadata.json', (error, agencies) => {
   main(agencies, {});
 });
