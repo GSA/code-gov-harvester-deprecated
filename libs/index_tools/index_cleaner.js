@@ -1,6 +1,4 @@
-const async               = require('async');
-const _                   = require('lodash');
-const AbstractIndexTool   = require('./abstract_index_tool');
+const _ = require('lodash');
 const Logger = require('../logger');
 const getConfig = require('../../config');
 const { toDays } = require('../utils');
