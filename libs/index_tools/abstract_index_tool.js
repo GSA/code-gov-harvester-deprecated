@@ -1,4 +1,4 @@
-const _                   = require("lodash");
+const _                   = require('lodash');
 /* eslint-disable */
 const ElasticSearch       = require("elasticsearch");
 
@@ -18,7 +18,7 @@ class ElasticSearchLogger extends Logger {
 class AbstractIndexTool {
 
   get LOGGER_NAME() {
-    return "alias-swapper";
+    return 'alias-swapper';
   }
 
   /**

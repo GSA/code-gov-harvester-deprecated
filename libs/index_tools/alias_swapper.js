@@ -1,6 +1,6 @@
-const async               = require("async");
-const AbstractIndexTool   = require("./abstract_index_tool");
-const Logger              = require("../../utils/logger");
+const async               = require('async');
+const AbstractIndexTool   = require('./abstract_index_tool');
+const Logger              = require('../../utils/logger');
 
 /* eslint-disable */
 const ElasticSearch       = require("elasticsearch");
@@ -19,7 +19,7 @@ class ElasticSearchLogger extends Logger {
 class AliasSwapper extends AbstractIndexTool {
 
   get LOGGER_NAME() {
-    return "alias-swapper";
+    return 'alias-swapper';
   }
 
   /**
@@ -39,7 +39,7 @@ class AliasSwapper extends AbstractIndexTool {
    */
   swapAlias(actions, callback) {
     this.logger.info(
-      `Swapping aliases.`);
+      'Swapping aliases.');
     this.client.indices.updateAliases({
       body: {
         actions: actions
@@ -66,7 +66,7 @@ class AliasSwapper extends AbstractIndexTool {
   static init(adapter, repoIndexInfo, callback) {
 
     let swapper = new AliasSwapper(adapter);
-    swapper.logger.info(`Starting alias swapping.`);
+    swapper.logger.info('Starting alias swapping.');
 
     //Find out who is using aliases
 
@@ -96,16 +96,16 @@ class AliasSwapper extends AbstractIndexTool {
         [repoIndexInfo].forEach(indexType => {
           indexType.currentAliasIndexes.forEach((index) => {
             actions.push({
-              "remove": {
-                "index": index,
-                "alias": indexType.esAlias
+              'remove': {
+                'index': index,
+                'alias': indexType.esAlias
               }
             });
           });
           actions.push({
-            "add": {
-              "index": indexType.esIndex,
-              "alias": indexType.esAlias
+            'add': {
+              'index': indexType.esIndex,
+              'alias': indexType.esAlias
             }
           });
         });
@@ -116,7 +116,7 @@ class AliasSwapper extends AbstractIndexTool {
       if(err) {
         swapper.logger.error(err);
       }
-      swapper.logger.info(`Finished swapping aliases.`);
+      swapper.logger.info('Finished swapping aliases.');
       return callback(err);
     });
   }
