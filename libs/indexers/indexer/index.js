@@ -1,5 +1,5 @@
 const moment = require('moment');
-const Logger = require('../../utils/logger');
+const Logger = require('../../logger');
 
 class Indexer {
 
@@ -29,69 +29,52 @@ class Indexer {
     );
   }
 
-  deleteIndex() {
-    this.logger.info(`Deleting index (${this.esIndex}).`);
-    return new Promise((resolve, reject) => {
-      this.client.indices.delete({
+  async deleteIndex() {
+    this.logger.debug(`Deleting index (${this.esIndex}).`);
+    try {
+      return await this.client.indices.delete({
         index: this.esIndex
-      }, (err, response, status) => {
-        if (err) {
-          this.logger.error(err);
-          reject(err);
-        } else {
-          this.logger.debug(status);
-          resolve(response);
-        }
       });
-    });
+    } catch(error) {
+      this.logger.trace(`ERROR deleteIndex for index: ${this.esIndex}`, error);
+      throw error;
+    }
   }
 
-  initIndex() {
-    this.logger.info(`Creating index (${this.esIndex}).`);
-    return new Promise((resovle, reject) => {
-      this.client.indices.create({
+  async initIndex() {
+    try {
+      return await this.client.indices.create({
         index: this.esIndex,
         body: this.esSettings
-      }, (err, response, status) => {
-        if(err) {
-          this.logger.error(err);
-          reject(err);
-        } else {
-          this.logger.debug(status);
-          resovle(response);
-        }
       });
-    });
+    } catch(error) {
+      this.logger.trace(`ERRRO initIndex for index: ${this.esIndex}`, error);
+      throw error;
+    }
   }
 
-  indexExists() {
-    return new Promise((resovle, reject) => {
-      this.client.indices.exists({
+  async indexExists() {
+    try {
+      return await this.client.indices.exists({
         index: this.esIndex
-      }, (err, response, status) => {
-        if(err) {
-          this.logger.error(err);
-          reject(err);
-        } else {
-          this.logger.debug(status);
-          resovle(response);
-        }
       });
-    });
+    } catch(error) {
+      this.logger.trace(`ERROR IndexExists for index ${this.esIndex}`, error);
+      throw error;
+    }
   }
 
-  indexDocument(doc) {
-    return new Promise((resovle, reject) => {
-      this.client.index(doc, (err, response, status) => {
-        if(err) {
-          this.logger.error(err);
-          reject(err);
-        } else {
-          this.logger.debug(status);
-          resovle(response);
-        }
+  async indexDocument(doc) {
+    try {
+      return await this.client.index({
+        index: this.esIndex,
+        type: this.esType,
+        body: doc
       });
-    });
+    } catch(error) {
+      this.logger.trace(error);
+      throw error;
+    }
   }
 
   initMapping() {
