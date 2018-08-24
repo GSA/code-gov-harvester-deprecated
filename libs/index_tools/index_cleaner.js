@@ -1,27 +1,9 @@
 const _ = require('lodash');
 const Logger = require('../logger');
-const getConfig = require('../../config');
 const { toDays } = require('../utils');
-const logger = new Logger({ name: 'index-cleaner' });
-
 const { getIndexesForAlias } = require('./utils');
 
-// If we are running this module directly from Node this code will execute.
-// This will index all repos taking our default input.
-if (require.main === module) {
-  //TODO: Make parameters
-  const reposAlias = 'repos';
-  const numDays = 10;
-  const elasticsearchAdapter = new ElasticsearchAdapter(getConfig(process.env.NODE_ENV));
-
-  IndexCleaner.init(elasticsearchAdapter, reposAlias, numDays, (err)=> {
-    if (err) {
-      Logger.error('Errors Occurred: ' + err);
-    } else {
-      Logger.info('Cleaning Completed.');
-    }
-  });
-}
+const logger = new Logger({ name: 'index-cleaner' });
 
 /**
  * Gets all indices for a given alias.
@@ -86,7 +68,6 @@ async function deleteIndices(indices, client) {
     logger.trace(error);
     throw error;
   }
-
 }
 
 /**
@@ -99,12 +80,23 @@ async function deleteIndices(indices, client) {
 async function cleanIndicesForAlias(aliasName, daysToKeep, adapter) {
   try {
     const client = adapter.getClient();
-    const indices = await getIndices(aliasName, daysToKeep);
-    const filtertedIndices = await filterAliasedIndices(aliasName, indices, client);
-    const response = await deleteIndices(filtertedIndices);
-    logger.debug('Aliases deleted', response);
+    const indices = await getIndices(aliasName, daysToKeep, client);
+
+    if(indices.length > 0) {
+      const filtertedIndices = await filterAliasedIndices(aliasName, indices, client);
+      const response = await deleteIndices(filtertedIndices, client);
+      logger.debug('Aliases deleted', response);
+      return response;
+    }
+
+    return {};
   } catch(error) {
     throw error;
   }
 }
-module.exports = cleanIndicesForAlias;
+module.exports = {
+  getIndices,
+  filterAliasedIndices,
+  deleteIndices,
+  cleanIndicesForAlias
+};
