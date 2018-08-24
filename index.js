@@ -8,10 +8,10 @@ const Logger = require('./libs/logger');
 const getIndexer = require('./libs/indexers');
 const {aliasSwap, cleanIndicesForAlias, optimizeIndex} = require('./libs/index_tools');
 const ElasticsearchAdapter = require('./libs/elasticsearch_adapter');
-
+const { calculateOverallCompliance } = require('./libs/utils')
 const logger = new Logger({ name: 'harvester-main' });
 
-// const Reporter  = require('./libs/reporter');
+const Reporter  = require('./libs/reporter');
 
 /**
  * Fetches JSON data from supplied URL
@@ -61,21 +61,113 @@ function generateStatusReport() {
   return {};
 }
 
-async function main(agencies, config) {
-  const adapter = new ElasticsearchAdapter(config);
-  let repoIndexer;
+async function processRepo(agency, repo, codeJsonVersion, validator) {
+  let validationTotals = {
+    errors: 0,
+    warnings: 0,
+    enhancements: 0
+  };
+  let validationIssues;
 
   try {
-    logger.info('Creating index.');
-    repoIndexer = await createIndex('repos', adapter);
+    logger.debug(`Validating repo: ${repo.name}`);
+    const validationResults = await validator.validateRepo(repo, agency);
+
+    if(validationResults.issues) {
+      validationTotals.errors += validationResults.issues.errors.length ? validationResults.issues.errors.length : 0;
+      validationTotals.warnings += validationResults.issues.warnings.length ? validationResults.issues.warnings.length : 0;
+      validationTotals.enhancements += validationResults.issues.enhancements.length ?
+        validationResults.issues.enhancements.length : 0;
+
+      validationIssues = validationResults.issues
+    }
+
+    validator.cleaner(repo);
+
+    const formatter = new Formatter();
+    const formattedRepo = await formatter.formatRepo(repo, agency, codeJsonVersion);
+
+    logger.debug(`Formatted repo: ${repo.repoId}`, formattedRepo);
+
+    return {
+      formattedRepo,
+      validationIssues,
+      validationTotals
+    };
   } catch(error) {
-    logger.error('Error while creating repo index', error);
-    process.exit(1);
+    logger.trace(`ERROR - processing repo: ${repo.name}`, error);
+    throw error;
+  }
+}
+
+funciton createReportDetailsString(stringPrefix, reportDetails) {
+  return stringPrefix + reportDetails.join(', ');
+}
+
+function processValidationTotals(validationTotals) {
+  let reportDetails = [];
+  let totalErrors = 0;
+  let reportStringPrefix = '';
+
+  if(validationTotals.errors) {
+    totalErrors += validationTotals.errors;
+    reportDetails.push(`${validationTotals.errors} ERRORS`);
+  }
+  if(validationTotals.warnings) {
+    totalErrors += validationTotals.warnings;
+    reportDetails.push(`${validationTotals.warnings} WARNINGS`);
   }
 
+  if(validationTotals.enhancements) {
+    reportDetails.push(`${validationTotals.enhancements} REQUESTED ENHANCEMENTS`);
+  }
+
+  if(totalErrors) {
+    reportStringPrefix = 'NOT FULLY COMPLIANT: ';
+  } else {
+    agency.requirements.schemaFormat = 1;
+    reportStringPrefix = 'FULLY COMPLIANT: ';
+  }
+
+  reportString = createReportDetailsString(reportStringPrefix, reportDetails);
+
+  return reportString;
+}
+
+async function indexOptimizations(indexName, indexAlias, adapter) {
+  try {
+    logger.info(`Optimizing index: ${indexName}`);
+    const response = await optimizeIndex(indexName, adapter);
+    logger.debug(response);
+  } catch(error) {
+    logger.trace(error);
+    throw error;
+  }
+  try {
+    logger.info(`Swapping index alias: ${indexAlias}`);
+    const response = await aliasSwap(indexName, indexAlias, adapter);
+    logger.debug(response);
+  } catch(error) {
+    logger.trace(error);
+    throw error;
+  }
+  try {
+    logger.info(`Cleaning indecies for alias: ${indexAlias}`);
+    const response = await cleanIndicesForAlias(indexAlias, 7, adapter);
+    logger.debug(response);
+  } catch(error) {
+    logger.trace(error);
+    throw error;
+  }
+}
+
+async function processAgencyRepos(agencies, repoIndexer) {
+  const reporter = new Reporter(config);
+  let validationTotals;
 
   for(let agency of agencies) {
     let jsonData = undefined;
+    reporter.reportMetadata(agency.acronym, agency);
     try {
       logger.info(`Fetching Code.json for ${agency.acronym}`);
       jsonData = await getCodeJson(agency.codeUrl);
@@ -83,54 +175,68 @@ async function main(agencies, config) {
       logger.error(`ERROR fetching code.json for ${agency.acronym}`,error);
     }
 
+    reporter.reportVersion(agency.acronym, jsonData.version);
+
     if(jsonData) {
       const reposCount = jsonData.releases.length;
       logger.info(`Processing ${reposCount} repos for agency ${agency.acronym}.`);
-      for(let repo of jsonData.releases) {
+
+      if(reposCount === 0 ) {
+        logger.trace(`ERROR: ${agency.acronym} code.json has no projects or releaseEvents.`);
+        reportString = 'NOT COMPLIANT: ';
+        reportDetails.push('Agency has not releases/repositories published.');
+      } else {
         try {
           const validator = getValidator(jsonData);
+          for(let repo of jsonData.releases) {
 
-          logger.debug(`Validating repo: ${repo.name}`);
-          const validationResults = await validator.validateRepo(repo, agency);
+            const result = processRepo(agency, repo, jsonData.version, validator);
 
-          // TODO: Calculate complaince dashboard
-          // TODO: Index validation Results into status index
+            validationTotals = result.validationTotals;
 
-          const formatter = new Formatter();
+            reporter.reportIssues(agency.acronym, result.validationIssues);
 
-          const formattedRepo = await formatter.formatRepo(repo, agency, jsonData.version);
+            repoIndexer.indexDocument(result.formattedRepo);
+          }
 
-          logger.debug(`Formatted repo: ${repo.repoId}`, formattedRepo);
-
-          repoIndexer.indexDocument(repo);
         } catch(error) {
-          logger.error(`ERROR - processing repo: ${repo.name}`, error);
+          logger.error(error);
         }
       }
+
+      agency.requirements.overallCompliance = calculateOverallCompliance(agency.requirements);
+      reporter.reportRequirements(agency.acronym, agency.requirements);
+
+      let reportDetail = processValidationTotals(validationTotals);
+
+      reporter.reportStatus(agency.acronym, reportDetail);
+
+      reporter.
     }
   }
+}
+
+async function main(agencies, config) {
+  const adapter = new ElasticsearchAdapter(config);
 
   try {
-    logger.info(`Optimizing index: ${repoIndexer.esIndex}`);
-    const response = await optimizeIndex(repoIndexer.esIndex, adapter);
-    logger.debug(response);
+    logger.info('Creating Repo index.');
+    const repoIndexer = await createIndex('repos', adapter);
+    await processAgencyRepos(agencies, repoIndexer);
+    await indexOptimizations(repoIndexer.esIndex, repoIndexer.esAlias, adapter);
   } catch(error) {
-    logger.error(error);
+    logger.error('Error while creating repo index', error);
+    process.exit(1);
   }
+
+
   try {
-    logger.info(`Swapping index alias: ${repoIndexer.esAlias}`);
-    const response = await aliasSwap(repoIndexer.esIndex, repoIndexer.esAlias, adapter);
-    logger.debug(response);
-  } catch(error) {
-    logger.error(error);
+    logger.info('Creating Terms index');
+
+  } catch (error) {
+
   }
-  try {
-    logger.info(`Cleaning indecies for alias: ${repoIndexer.esAlias}`);
-    const response = await cleanIndicesForAlias(repoIndexer.esAlias, 7, adapter);
-    logger.debug(response);
-  } catch(error) {
-    logger.error(error);
-  }
+
 }
 
 logger.info('[STARTED]: Code.json processing');
