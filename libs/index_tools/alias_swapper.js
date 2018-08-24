@@ -1,126 +1,78 @@
-const async               = require('async');
-const AbstractIndexTool   = require('./abstract_index_tool');
-const Logger              = require('../../utils/logger');
+const Logger = require('../logger');
+const { getIndexesForAlias, aliasExists } = require('./utils');
 
-/* eslint-disable */
-const ElasticSearch       = require("elasticsearch");
-class ElasticSearchLogger extends Logger {
-  get DEFAULT_LOGGER_NAME() {
-    return "elasticsearch";
-  }
+const logger = new Logger({ name: 'alias-swapper'} );
+
+function createAction(actionType, index, alias) {
+  let action = {};
+  action[actionType] = {
+    'index': index,
+    'alias': alias
+  };
+  return action;
 }
-/* eslint-enable */
 
 /**
- * Class for Swapping out ElasticSearch Aliases
+ * Gets an array of indices that are associated with the alias
  *
- * @class AliasSwapper
+ * @param {any} aliasName The alias to check for.
+ * @param {any} callback
  */
-class AliasSwapper extends AbstractIndexTool {
+async function updateAliases(actions, client) {
+  logger.debug('Updating aliases.');
 
-  get LOGGER_NAME() {
-    return 'alias-swapper';
-  }
-
-  /**
-   * Creates an instance of AliasSwapper.
-   *
-   * @param {any} adapter The search adapter to use for connecting to ElasticSearch
-   */
-  constructor(adapter) {
-    super(adapter);
-  }
-
-  /**
-   * Gets an array of indices that are associated with the alias
-   *
-   * @param {any} aliasName The alias to check for.
-   * @param {any} callback
-   */
-  swapAlias(actions, callback) {
-    this.logger.info(
-      'Swapping aliases.');
-    this.client.indices.updateAliases({
+  try {
+    return await client.indices.updateAliases({
       body: {
         actions: actions
       }
-    }, (err, response, status) => {
-      if(err) {
-        this.logger.error(err);
-      }
-      if (status) {
-        this.logger.debug('Status', status);
-      }
-      return callback(err, response);
     });
+  } catch(error) {
+    logger.trace('ERROR updating aliases', error);
+    throw error;
   }
-
-  /**
-   * Initializes and executes the swapping of aliases for repos
-   *
-   * @static
-   * @param {any} adapter The search adapter to use for making requests to ElasticSearch
-   * @param {any} repoIndexInfo Information about the index and alias for repos
-   * @param {any} callback
-   */
-  static init(adapter, repoIndexInfo, callback) {
-
-    let swapper = new AliasSwapper(adapter);
-    swapper.logger.info('Starting alias swapping.');
-
-    //Find out who is using aliases
-
-    async.waterfall([
-      //Get indexes for repo alias
-      (next) => {
-        swapper.aliasExists(repoIndexInfo.esAlias, next);
-      },
-      (exists, next) => {
-        if(exists) {
-          swapper.getIndexesForAlias(repoIndexInfo.esAlias, next);
-        } else {
-          //Empty Array of Indexes used by Alias
-          next(null, []);
-        }
-      },
-      (indexesForAlias, next) => {
-        repoIndexInfo.currentAliasIndexes = indexesForAlias;
-        next(null);
-      },
-      // Build the removal and addions.
-      (next) => {
-
-        let actions = [];
-
-        // Loop over the repo indexes and setup the add/removes for this swap.
-        [repoIndexInfo].forEach(indexType => {
-          indexType.currentAliasIndexes.forEach((index) => {
-            actions.push({
-              'remove': {
-                'index': index,
-                'alias': indexType.esAlias
-              }
-            });
-          });
-          actions.push({
-            'add': {
-              'index': indexType.esIndex,
-              'alias': indexType.esAlias
-            }
-          });
-        });
-
-        swapper.swapAlias(actions, next);
-      }
-    ], (err) => {
-      if(err) {
-        swapper.logger.error(err);
-      }
-      swapper.logger.info('Finished swapping aliases.');
-      return callback(err);
-    });
-  }
-
 }
 
-module.exports = AliasSwapper;
+/**
+ * Initializes and executes the swapping of aliases for repos
+ *
+ * @param {any} adapter The search adapter to use for making requests to ElasticSearch
+ * @param {any} indexName Name of the index we are working with
+ * @param {any} indexAlias Index alias we are working with.
+ */
+async function aliasSwap(indexName, indexAlias, adapter) {
+  logger.info('Starting alias swapping.');
+
+  const client = adapter.getClient();
+  let exists;
+  try{
+    exists = await aliasExists(indexAlias, client);
+  } catch(error) {
+    logger.trace(`ERROR aliasExists for alias: ${indexAlias}`);
+  }
+  let actions = [];
+
+  if(exists) {
+    try {
+      const indices = await getIndexesForAlias(indexAlias, client);
+      for(let index of indices) {
+        actions.push(createAction('remove', index, indexAlias));
+      }
+    } catch(error) {
+      logger.trace(`ERROR getting indexes for Alias: ${indexAlias}`,error);
+    }
+
+  }
+
+  actions.push(createAction('add', indexName, indexAlias));
+
+  const response = await updateAliases(actions, client);
+
+  return response;
+}
+
+module.exports = {
+  updateAliases,
+  aliasSwap,
+  createAction
+};
