@@ -24,6 +24,7 @@ class ElasticsearchAdapter {
    * @param {object} config object containing application configuration.
    */
   constructor(config) {
+    this.config = config;
     this.client = new ElasticSearch.Client({
       hosts: this._getHostsFromConfig(config),
       log: SearchLogger
