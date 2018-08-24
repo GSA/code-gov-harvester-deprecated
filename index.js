@@ -66,7 +66,7 @@ async function main(agencies, config) {
   let repoIndexer;
 
   try {
-    logger.info('Creating index.')
+    logger.info('Creating index.');
     repoIndexer = await createIndex('repos', adapter);
   } catch(error) {
     logger.error('Error while creating repo index', error);
@@ -85,7 +85,7 @@ async function main(agencies, config) {
 
     if(jsonData) {
       const reposCount = jsonData.releases.length;
-      logger.info(`Processing ${reposCount} repos for agency ${agency.acronym}.`)
+      logger.info(`Processing ${reposCount} repos for agency ${agency.acronym}.`);
       for(let repo of jsonData.releases) {
         try {
           const validator = getValidator(jsonData);
