@@ -1,5 +1,5 @@
-const repoIndexMappings = require('./indexes_mappings_and_settings/repo/mapping_201.json');
-const repoIndexSettings = require('./indexes_mappings_and_settings/repo/settings.json');
+const repoIndexMappings = require('./elasticsearch_mappings_settings/mapping_201.json');
+const repoIndexSettings = require('./elasticsearch_mappings_settings/settings.json');
 
 function getRepoIndexConfig() {
   return {

@@ -1,10 +1,7 @@
 const getRepoIndexConfig = require('./repos');
 const Indexer = require('./indexer');
-const ElasticsearchAdapter = require('../elasticsearch_adapter');
 
-function getIndexer(indexerType, config) {
-  const adapter = ElasticsearchAdapter(config);
-
+function getIndexer(indexerType, adapter) {
   if(indexerType === 'repos') {
     const repoIndexConfig = getRepoIndexConfig();
     return new Indexer(adapter, repoIndexConfig);
