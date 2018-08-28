@@ -8,7 +8,7 @@ const Logger = require('./libs/logger');
 const getIndexer = require('./libs/indexers');
 const {aliasSwap, cleanIndicesForAlias, optimizeIndex} = require('./libs/index_tools');
 const ElasticsearchAdapter = require('./libs/elasticsearch_adapter');
-const { calculateOverallCompliance } = require('./libs/utils')
+const { calculateOverallCompliance } = require('./libs/utils');
 const logger = new Logger({ name: 'harvester-main' });
 
 const Reporter  = require('./libs/reporter');
@@ -79,7 +79,7 @@ async function processRepo(agency, repo, codeJsonVersion, validator) {
       validationTotals.enhancements += validationResults.issues.enhancements.length ?
         validationResults.issues.enhancements.length : 0;
 
-      validationIssues = validationResults.issues
+      validationIssues = validationResults.issues;
     }
 
     validator.cleaner(repo);
@@ -100,11 +100,11 @@ async function processRepo(agency, repo, codeJsonVersion, validator) {
   }
 }
 
-funciton createReportDetailsString(stringPrefix, reportDetails) {
+function createReportDetailsString(stringPrefix, reportDetails) {
   return stringPrefix + reportDetails.join(', ');
 }
 
-function processValidationTotals(validationTotals) {
+function processValidationTotals(validationTotals, agency) {
   let reportDetails = [];
   let totalErrors = 0;
   let reportStringPrefix = '';
@@ -129,9 +129,7 @@ function processValidationTotals(validationTotals) {
     reportStringPrefix = 'FULLY COMPLIANT: ';
   }
 
-  reportString = createReportDetailsString(reportStringPrefix, reportDetails);
-
-  return reportString;
+  return createReportDetailsString(reportStringPrefix, reportDetails);
 }
 
 async function indexOptimizations(indexName, indexAlias, adapter) {
@@ -164,6 +162,7 @@ async function indexOptimizations(indexName, indexAlias, adapter) {
 async function processAgencyRepos(agencies, repoIndexer) {
   const reporter = new Reporter(config);
   let validationTotals;
+  let reportDetails;
 
   for(let agency of agencies) {
     let jsonData = undefined;
@@ -183,22 +182,18 @@ async function processAgencyRepos(agencies, repoIndexer) {
 
       if(reposCount === 0 ) {
         logger.trace(`ERROR: ${agency.acronym} code.json has no projects or releaseEvents.`);
-        reportString = 'NOT COMPLIANT: ';
-        reportDetails.push('Agency has not releases/repositories published.');
+        reportDetails = createReportDetailsString('NOT COMPLIANT: ', ['Agency has not releases/repositories published.']);
       } else {
         try {
           const validator = getValidator(jsonData);
           for(let repo of jsonData.releases) {
-
             const result = processRepo(agency, repo, jsonData.version, validator);
 
             validationTotals = result.validationTotals;
-
             reporter.reportIssues(agency.acronym, result.validationIssues);
-
             repoIndexer.indexDocument(result.formattedRepo);
           }
-
+          reportDetails = processValidationTotals(validationTotals);
         } catch(error) {
           logger.error(error);
         }
@@ -206,16 +201,13 @@ async function processAgencyRepos(agencies, repoIndexer) {
 
       agency.requirements.overallCompliance = calculateOverallCompliance(agency.requirements);
       reporter.reportRequirements(agency.acronym, agency.requirements);
-
-      let reportDetail = processValidationTotals(validationTotals);
-
-      reporter.reportStatus(agency.acronym, reportDetail);
-
-      reporter.
+      reporter.reportStatus(agency.acronym, reportDetails);
     }
   }
 }
+async function processTerms(indexer) {
 
+}
 async function main(agencies, config) {
   const adapter = new ElasticsearchAdapter(config);
 
@@ -232,9 +224,10 @@ async function main(agencies, config) {
 
   try {
     logger.info('Creating Terms index');
-
+    const termsIndexer = await createIndex('terms', adapter);
+    await processTerms(termsIndexer);
   } catch (error) {
-
+    logger.error(error);
   }
 
 }
