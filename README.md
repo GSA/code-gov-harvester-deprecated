@@ -2,7 +2,11 @@
 
 Harvester to process agency `code.json` files.
 
-# Running
+## DEPRECATION WARNING
+
+This repository is considered deprecated and will be archived. For the new version of this tool please go to [GSA/code-gov-harvester](https://github.com/GSA/code-gov-harvester).
+
+## Running
 
 1. Clone repo: `$> git clone git@github.com:GSA/code-gov-harvester.git`
 2. Move into the project directory
